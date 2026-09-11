@@ -9,6 +9,8 @@
         android:allowBackup="false"
         android:usesCleartextTraffic="false"
         android:label="AlmasTube"
+        android:icon="@drawable/app_icon"
+        android:roundIcon="@drawable/app_icon"
         android:theme="@style/AppTheme">
         <activity android:name=".LocalPlayerActivity" android:exported="false" />
         <activity android:name=".PlayerActivity" android:exported="false" />
