@@ -35,7 +35,45 @@ public class MainActivity extends Activity {
     Result su(String cmd){try{java.lang.Process p=new ProcessBuilder("su","-c",cmd).redirectErrorStream(true).start();BufferedReader r=new BufferedReader(new InputStreamReader(p.getInputStream()));StringBuilder o=new StringBuilder();String l;while((l=r.readLine())!=null)o.append(l).append('\n');return new Result(p.waitFor(),o.toString());}catch(Exception e){return new Result(127,e.toString());}}
     void checkRoot(){busy(true);worker.execute(()->{Result r=su("id");ui.post(()->{busy(false);if(r.code==0&&r.out.contains("uid=0")){status.setText("✓ Root рұқсаты бар");status.setTextColor(Color.rgb(124,255,178));}else{status.setText("✕ Root рұқсаты жоқ немесе бас тартылды");status.setTextColor(Color.rgb(255,120,120));}});});}
     boolean allowed(String p){return p!=null&&(p.startsWith("/sdcard/")||p.startsWith("/storage/emulated/0/"));}
-    void scan(){busy(true);status.setText("Сканерленіп жатыр…");worker.execute(()->{Result r=su("find /sdcard -type f -size +20M -print0 2>/dev/null | xargs -0 -r du -b 2>/dev/null | sort -nr | head -n 250");ArrayList<Item> items=new ArrayList<>();long total=0;for(String line:r.out.split("\\n")){line=line.trim();if(line.isEmpty())continue;int i=line.indexOf('\t');if(i<1)i=line.indexOf(' ');if(i<1)continue;try{long n=Long.parseLong(line.substring(0,i).trim());String p=line.substring(i).trim();if(allowed(p)){items.add(new Item(p,n));total+=n;}}catch(Exception ignored){}}long sum=total;ui.post(()->{busy(false);checks.clear();list.removeAllViews();status.setText(items.isEmpty()?"Файл табылмады немесе root жоқ":"✓ Сканер аяқталды");stats.setText(items.size()+" файл • "+human(sum));for(Item it:items){CheckBox c=new CheckBox(this);c.setText(human(it.bytes)+"\n"+it.path);c.setTextColor(Color.WHITE);c.setPadding(0,7,0,7);list.addView(c);checks.put(it.path,c);}});});}
+
+    void scan(){
+        busy(true); status.setText("Сканерленіп жатыр…");
+        worker.execute(()->{
+            String cmd =
+                "if command -v busybox >/dev/null 2>&1; then " +
+                "FIND='busybox find'; STAT='busybox stat'; SORT='busybox sort'; HEAD='busybox head'; " +
+                "else FIND='find'; STAT='stat'; SORT='sort'; HEAD='head'; fi; " +
+                "$FIND /sdcard -type f 2>/dev/null | while IFS= read -r f; do " +
+                "s=$($STAT -c %s \"$f\" 2>/dev/null); " +
+                "if [ -n \"$s\" ] && [ \"$s\" -ge 20971520 ] 2>/dev/null; then printf '%s|%s\\n' \"$s\" \"$f\"; fi; " +
+                "done | $SORT -t'|' -k1,1nr | $HEAD -n 250";
+            Result r=su(cmd);
+            ArrayList<Item> items=new ArrayList<>(); long total=0;
+            for(String line:r.out.split("\\n")){
+                line=line.trim(); if(line.isEmpty())continue;
+                int i=line.indexOf('|'); if(i<1)continue;
+                try{
+                    long n=Long.parseLong(line.substring(0,i).trim());
+                    String p=line.substring(i+1).trim();
+                    if(allowed(p)){items.add(new Item(p,n));total+=n;}
+                }catch(Exception ignored){}
+            }
+            long sum=total; int exit=r.code;
+            ui.post(()->{
+                busy(false); checks.clear(); list.removeAllViews();
+                if(exit!=0 && items.isEmpty()){
+                    status.setText("Сканер қатесі"); status.setTextColor(Color.rgb(255,120,120));
+                    stats.setText("Root бар, бірақ storage командасы орындалмады.");
+                    return;
+                }
+                status.setText(items.isEmpty()?"20 MB-тан үлкен файл табылмады":"✓ Сканер аяқталды");
+                status.setTextColor(items.isEmpty()?Color.rgb(255,205,90):Color.rgb(124,255,178));
+                stats.setText(items.size()+" файл • "+human(sum));
+                for(Item it:items){CheckBox c=new CheckBox(this);c.setText(human(it.bytes)+"\n"+it.path);c.setTextColor(Color.WHITE);c.setPadding(0,7,0,7);list.addView(c);checks.put(it.path,c);}
+            });
+        });
+    }
+
     void confirmDelete(){ArrayList<String>s=new ArrayList<>();for(Map.Entry<String,CheckBox>e:checks.entrySet())if(e.getValue().isChecked()&&allowed(e.getKey()))s.add(e.getKey());if(s.isEmpty()){Toast.makeText(this,"Алдымен файл таңда",Toast.LENGTH_SHORT).show();return;}new AlertDialog.Builder(this).setTitle("Өшіру").setMessage(s.size()+" файл қайтарымсыз өшіріледі.").setNegativeButton("Жоқ",null).setPositiveButton("Өшіру",(d,w)->deleteFiles(s)).show();}
     void deleteFiles(ArrayList<String> ps){busy(true);worker.execute(()->{int ok=0;for(String p:ps){if(!allowed(p))continue;String q="'"+p.replace("'","'\\''")+"'";if(su("[ -f "+q+" ] && rm -f -- "+q).code==0)ok++;}int n=ok;ui.post(()->{busy(false);Toast.makeText(this,n+" файл өшірілді",Toast.LENGTH_LONG).show();scan();});});}
     String human(long b){double n=b;String[]u={"B","KB","MB","GB","TB"};int i=0;while(n>=1024&&i<u.length-1){n/=1024;i++;}return String.format(Locale.US,"%.1f %s",n,u[i]);}
