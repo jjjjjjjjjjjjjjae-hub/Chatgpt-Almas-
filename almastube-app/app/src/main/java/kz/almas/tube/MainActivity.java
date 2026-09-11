@@ -21,6 +21,7 @@ import java.util.concurrent.*;
 
 public class MainActivity extends Activity {
     private static final int PICK_VIDEO = 41;
+    private static final String FEATURED_CHANNEL_ID = "UCc1uHehLF-wzRMD6j_aJNtA";
     private static final int BG = Color.rgb(10,10,14);
     private static final int PANEL = Color.rgb(24,24,31);
     private static final int PANEL_2 = Color.rgb(34,34,43);
@@ -31,9 +32,9 @@ public class MainActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private SharedPreferences prefs;
     private EditText searchBox;
-    private TextView status;
-    private LinearLayout results, homePane, offlinePane, favPane, settingsPane;
-    private LinearLayout offlineList;
+    private TextView status, channelHeading, channelSub;
+    private LinearLayout results, homePane, channelPane, offlinePane, favPane, settingsPane;
+    private LinearLayout channelList, offlineList;
     private final ArrayList<Button> navButtons = new ArrayList<>();
 
     static class VideoItem {
@@ -69,16 +70,21 @@ public class MainActivity extends Activity {
         root.addView(status,new LinearLayout.LayoutParams(-1,-2));
 
         FrameLayout frame=new FrameLayout(this); root.addView(frame,new LinearLayout.LayoutParams(-1,0,1));
-        homePane=buildHomePane(); offlinePane=buildOfflinePane(); favPane=buildFavPane(); settingsPane=buildSettingsPane();
-        frame.addView(homePane); frame.addView(offlinePane); frame.addView(favPane); frame.addView(settingsPane);
+        homePane=buildHomePane();
+        channelPane=buildChannelPane();
+        offlinePane=buildOfflinePane();
+        favPane=buildFavPane();
+        settingsPane=buildSettingsPane();
+        frame.addView(homePane); frame.addView(channelPane); frame.addView(offlinePane); frame.addView(favPane); frame.addView(settingsPane);
 
         LinearLayout nav=new LinearLayout(this); nav.setGravity(Gravity.CENTER); nav.setPadding(dp(4),dp(7),dp(4),0); nav.setBackground(round(PANEL,24));
-        Button home=bottomButton("⌂\nHome"), off=bottomButton("↓\nOffline"), fav=bottomButton("★\nSaved"), set=bottomButton("⚙\nSettings");
-        navButtons.add(home);navButtons.add(off);navButtons.add(fav);navButtons.add(set);
+        Button home=bottomButton("Home"), channel=bottomButton("Канал"), off=bottomButton("Offline"), fav=bottomButton("Saved"), set=bottomButton("Settings");
+        navButtons.add(home);navButtons.add(channel);navButtons.add(off);navButtons.add(fav);navButtons.add(set);
         for(Button b:navButtons)nav.addView(b,new LinearLayout.LayoutParams(0,dp(58),1));
         root.addView(nav);
 
         home.setOnClickListener(v->showPane(homePane,home));
+        channel.setOnClickListener(v->{showPane(channelPane,channel);loadFeaturedChannel(false);});
         off.setOnClickListener(v->{showPane(offlinePane,off);refreshOffline();});
         fav.setOnClickListener(v->{showPane(favPane,fav);showFavorites();});
         set.setOnClickListener(v->{showPane(settingsPane,set);refreshSettings();});
@@ -100,6 +106,21 @@ public class MainActivity extends Activity {
         TextView section=text("Нәтижелер",17,Color.WHITE,true); section.setPadding(0,dp(16),0,dp(8)); pane.addView(section);
         ScrollView sc=new ScrollView(this); sc.setFillViewport(true); results=new LinearLayout(this); results.setOrientation(LinearLayout.VERTICAL); sc.addView(results); pane.addView(sc,new LinearLayout.LayoutParams(-1,0,1));
         TextView empty=text("Іздеу жолағына сұраныс жаз.",14,MUTED,false); empty.setGravity(Gravity.CENTER); empty.setPadding(0,dp(45),0,0); results.addView(empty);
+        return pane;
+    }
+
+    private LinearLayout buildChannelPane(){
+        LinearLayout pane=new LinearLayout(this); pane.setOrientation(LinearLayout.VERTICAL); pane.setPadding(0,dp(14),0,0); pane.setVisibility(View.GONE);
+        LinearLayout header=new LinearLayout(this); header.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout titleBox=new LinearLayout(this); titleBox.setOrientation(LinearLayout.VERTICAL);
+        channelHeading=text("Арнайы канал",23,Color.WHITE,true); titleBox.addView(channelHeading);
+        channelSub=text(FEATURED_CHANNEL_ID,12,MUTED,false); channelSub.setPadding(0,dp(2),0,0); titleBox.addView(channelSub);
+        header.addView(titleBox,new LinearLayout.LayoutParams(0,-2,1));
+        Button refresh=smallButton("↻ Жаңарту"); refresh.setOnClickListener(v->loadFeaturedChannel(true)); header.addView(refresh,new LinearLayout.LayoutParams(dp(110),dp(42)));
+        pane.addView(header);
+        TextView info=text("Осы каналға жүктелген YouTube видеолары",13,MUTED,false); info.setPadding(0,dp(8),0,dp(10)); pane.addView(info);
+        ScrollView sc=new ScrollView(this); sc.setFillViewport(true); channelList=new LinearLayout(this); channelList.setOrientation(LinearLayout.VERTICAL); sc.addView(channelList); pane.addView(sc,new LinearLayout.LayoutParams(-1,0,1));
+        TextView empty=text("Каналға кіргенде видеолар автоматты жүктеледі.",14,MUTED,false); empty.setGravity(Gravity.CENTER); empty.setPadding(0,dp(45),0,0); channelList.addView(empty);
         return pane;
     }
 
@@ -141,17 +162,24 @@ public class MainActivity extends Activity {
         TextView kv=text(masked,13,MUTED,false);kv.setPadding(0,dp(5),0,dp(10));apiCard.addView(kv);
         Button change=accentButton("API key ауыстыру");change.setOnClickListener(v->showApiDialog(false));apiCard.addView(change,new LinearLayout.LayoutParams(-1,dp(48)));settingsPane.addView(apiCard);
 
+        LinearLayout channelCard=card(); LinearLayout.LayoutParams chp=new LinearLayout.LayoutParams(-1,-2);chp.setMargins(0,dp(10),0,0);
+        channelCard.addView(text("Арнайы канал",16,Color.WHITE,true)); TextView chInfo=text(FEATURED_CHANNEL_ID,12,MUTED,false); chInfo.setPadding(0,dp(5),0,0); channelCard.addView(chInfo); settingsPane.addView(channelCard,chp);
+
         LinearLayout data=card(); LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.setMargins(0,dp(10),0,0);
         data.addView(text("Local data",16,Color.WHITE,true)); TextView info=text("Saved: "+prefs.getStringSet("favorites",Collections.emptySet()).size()+"  •  Offline: "+offlineCount(),13,MUTED,false); info.setPadding(0,dp(5),0,dp(10)); data.addView(info);
         Button clear=darkButton("Saved тізімін тазалау");clear.setOnClickListener(v->new AlertDialog.Builder(this).setTitle("Saved тазалау").setMessage("Таңдаулы тізім өшіріледі.").setNegativeButton("Жоқ",null).setPositiveButton("Тазалау",(d,w)->{prefs.edit().remove("favorites").apply();refreshSettings();}).show());data.addView(clear,new LinearLayout.LayoutParams(-1,dp(48)));settingsPane.addView(data,cp);
 
-        TextView ver=text("AlmasTube v2.0 • YouTube Data API v3",12,Color.rgb(105,105,116),false);ver.setGravity(Gravity.CENTER);ver.setPadding(0,dp(24),0,0);settingsPane.addView(ver);
+        TextView ver=text("AlmasTube v2.1 • YouTube Data API v3",12,Color.rgb(105,105,116),false);ver.setGravity(Gravity.CENTER);ver.setPadding(0,dp(24),0,0);settingsPane.addView(ver);
     }
 
     private int offlineCount(){return prefs.getStringSet("downloads",Collections.emptySet()).size()+prefs.getStringSet("local_videos",Collections.emptySet()).size();}
 
     private void showPane(View pane,Button selected){
-        homePane.setVisibility(pane==homePane?View.VISIBLE:View.GONE); offlinePane.setVisibility(pane==offlinePane?View.VISIBLE:View.GONE); favPane.setVisibility(pane==favPane?View.VISIBLE:View.GONE); settingsPane.setVisibility(pane==settingsPane?View.VISIBLE:View.GONE);
+        homePane.setVisibility(pane==homePane?View.VISIBLE:View.GONE);
+        channelPane.setVisibility(pane==channelPane?View.VISIBLE:View.GONE);
+        offlinePane.setVisibility(pane==offlinePane?View.VISIBLE:View.GONE);
+        favPane.setVisibility(pane==favPane?View.VISIBLE:View.GONE);
+        settingsPane.setVisibility(pane==settingsPane?View.VISIBLE:View.GONE);
         for(Button b:navButtons){b.setTextColor(b==selected?Color.WHITE:MUTED);b.setBackground(b==selected?round(RED,18):round(Color.TRANSPARENT,18));}
     }
 
@@ -178,8 +206,67 @@ public class MainActivity extends Activity {
         });
     }
 
+    private void loadFeaturedChannel(boolean force){
+        String key=prefs.getString("api_key","").trim();
+        if(key.isEmpty()){showApiDialog(true);return;}
+        if(!force && channelList!=null && channelList.getTag()!=null && "loaded".equals(channelList.getTag())) return;
+        status.setText("Канал видеолары жүктеліп жатыр…");
+        channelList.removeAllViews();
+        TextView loading=text("Канал жүктеліп жатыр…",14,MUTED,false); loading.setGravity(Gravity.CENTER); loading.setPadding(0,dp(45),0,0); channelList.addView(loading);
+        worker.execute(()->{
+            try{
+                String channelUrl="https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails&id="+URLEncoder.encode(FEATURED_CHANNEL_ID,"UTF-8")+"&key="+URLEncoder.encode(key,"UTF-8");
+                JSONObject channelRoot=new JSONObject(httpGet(channelUrl)); JSONArray channels=channelRoot.optJSONArray("items");
+                if(channels==null || channels.length()==0) throw new IOException("Канал табылмады");
+                JSONObject channel=channels.getJSONObject(0);
+                String channelName=decode(channel.getJSONObject("snippet").optString("title","Арнайы канал"));
+                String uploads=channel.getJSONObject("contentDetails").getJSONObject("relatedPlaylists").optString("uploads","");
+                if(uploads.isEmpty()) throw new IOException("Uploads playlist табылмады");
+
+                ArrayList<VideoItem> all=new ArrayList<>();
+                String pageToken="";
+                int pages=0;
+                do{
+                    String listUrl="https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId="+URLEncoder.encode(uploads,"UTF-8")+"&key="+URLEncoder.encode(key,"UTF-8");
+                    if(!pageToken.isEmpty()) listUrl += "&pageToken="+URLEncoder.encode(pageToken,"UTF-8");
+                    JSONObject page=new JSONObject(httpGet(listUrl)); JSONArray items=page.optJSONArray("items");
+                    if(items!=null){
+                        for(int i=0;i<items.length();i++){
+                            JSONObject o=items.getJSONObject(i); JSONObject sn=o.optJSONObject("snippet"); JSONObject cd=o.optJSONObject("contentDetails");
+                            if(sn==null || cd==null) continue;
+                            String id=cd.optString("videoId",""); if(id.isEmpty()) continue;
+                            String title=decode(sn.optString("title","Видео"));
+                            if("Deleted video".equalsIgnoreCase(title) || "Private video".equalsIgnoreCase(title)) continue;
+                            JSONObject thumbs=sn.optJSONObject("thumbnails"); JSONObject th=thumbs==null?null:thumbs.optJSONObject("medium"); if(th==null && thumbs!=null) th=thumbs.optJSONObject("default");
+                            all.add(new VideoItem(id,title,channelName,th==null?"":th.optString("url")));
+                        }
+                    }
+                    pageToken=page.optString("nextPageToken","");
+                    pages++;
+                    final int loadedCount=all.size();
+                    ui.post(()->status.setText("Канал: "+loadedCount+" видео жүктелді…"));
+                }while(!pageToken.isEmpty() && pages<100);
+
+                ui.post(()->{
+                    channelHeading.setText(channelName);
+                    channelSub.setText(FEATURED_CHANNEL_ID+" • "+all.size()+" видео");
+                    channelList.setTag("loaded");
+                    status.setText("✓ "+channelName+": "+all.size()+" видео");
+                    renderResults(all,channelList);
+                });
+            }catch(Exception e){
+                ui.post(()->{
+                    channelList.setTag(null);
+                    channelList.removeAllViews();
+                    status.setText("Канал қатесі: "+friendlyError(e));
+                    TextView err=text("Канал видеолары жүктелмеді. API key мен интернетті тексеріп, «Жаңарту» бас.",14,MUTED,false); err.setPadding(0,dp(28),0,0); err.setGravity(Gravity.CENTER); channelList.addView(err);
+                });
+            }
+        });
+    }
+
     private String httpGet(String u)throws Exception{
-        HttpURLConnection c=(HttpURLConnection)new URL(u).openConnection();c.setConnectTimeout(12000);c.setReadTimeout(15000);c.setRequestProperty("Accept","application/json");c.setRequestProperty("User-Agent","AlmasTube/2.0 Android");int code=c.getResponseCode();InputStream is=code>=400?c.getErrorStream():c.getInputStream();String body=readAll(is);if(code>=400)throw new IOException("HTTP "+code+" "+body);return body;
+        HttpURLConnection c=(HttpURLConnection)new URL(u).openConnection();c.setConnectTimeout(12000);c.setReadTimeout(15000);c.setRequestProperty("Accept","application/json");c.setRequestProperty("User-Agent","AlmasTube/2.1 Android");int code=c.getResponseCode();InputStream is=code>=400?c.getErrorStream():c.getInputStream();String body=readAll(is);if(code>=400)throw new IOException("HTTP "+code+" "+body);return body;
     }
 
     private void renderResults(List<VideoItem> items,LinearLayout target){
@@ -255,7 +342,7 @@ public class MainActivity extends Activity {
     private Button accentButton(String s){Button b=new Button(this);b.setText(s);b.setTextColor(Color.WHITE);b.setTextSize(13);b.setAllCaps(false);b.setBackground(round(RED,16));return b;}
     private Button darkButton(String s){Button b=new Button(this);b.setText(s);b.setTextColor(Color.WHITE);b.setTextSize(13);b.setAllCaps(false);b.setBackground(round(PANEL_2,16));return b;}
     private Button smallButton(String s){Button b=darkButton(s);b.setTextSize(12);return b;}
-    private Button bottomButton(String s){Button b=new Button(this);b.setText(s);b.setTextSize(11);b.setAllCaps(false);b.setGravity(Gravity.CENTER);b.setPadding(0,0,0,0);b.setTextColor(MUTED);b.setBackground(round(Color.TRANSPARENT,18));return b;}
+    private Button bottomButton(String s){Button b=new Button(this);b.setText(s);b.setTextSize(10);b.setAllCaps(false);b.setGravity(Gravity.CENTER);b.setPadding(0,0,0,0);b.setTextColor(MUTED);b.setBackground(round(Color.TRANSPARENT,18));return b;}
     private GradientDrawable round(int color,float radius){GradientDrawable g=new GradientDrawable();g.setColor(color);g.setCornerRadius(dp((int)radius));return g;}
     private int dp(int v){return(int)(v*getResources().getDisplayMetrics().density+.5f);}
     private String b64(String s){return android.util.Base64.encodeToString(s.getBytes(StandardCharsets.UTF_8),android.util.Base64.NO_WRAP);}
