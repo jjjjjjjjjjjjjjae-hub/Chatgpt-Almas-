@@ -624,7 +624,7 @@ jobs:
           public class MainActivity extends Activity {
               static final int REQ_PERMS=2001, REQ_CAPTURE=2002;
               static final String GAME="com.launcher.brgame", PREFS="almas_br";
-              static final String PAGE="https://jjjjjjjjjjjjjjae-hub.github.io/Chatgpt-Almas-/";
+              static final String PAGE="https://jjjjjjjjjjjjjjae-hub.github.io/Almas.offikal/br-live/";
               final int BG=Color.rgb(7,9,15), CARD=Color.rgb(18,22,34), CARD2=Color.rgb(25,30,45);
               final int PURPLE=Color.rgb(124,92,255), GREEN=Color.rgb(57,217,154), MUTED=Color.rgb(153,162,184);
               SharedPreferences prefs; String room,nick,selected="";
@@ -799,7 +799,7 @@ jobs:
           s=p.read_text()
           # add GitHub.io HTTPS deep link to MainActivity
           marker='            <intent-filter>\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="almasoffical" android:host="join" />\n            </intent-filter>'
-          extra=marker+'\n\n            <intent-filter>\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="https" android:host="jjjjjjjjjjjjjjae-hub.github.io" android:pathPrefix="/Chatgpt-Almas-/" />\n            </intent-filter>'
+          extra=marker+'\n\n            <intent-filter>\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="https" android:host="jjjjjjjjjjjjjjae-hub.github.io" android:pathPrefix="/Almas.offikal/br-live/" />\n            </intent-filter>'
           if 'jjjjjjjjjjjjjjae-hub.github.io' not in s: s=s.replace(marker,extra)
           p.write_text(s)
           PY
