@@ -9,106 +9,809 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Recreate v0.4 project
+
+      - name: Recreate Android project
         shell: bash
         run: |
-          cat > /tmp/brv04.b64 <<'B64'
-          UEsDBAoAAAAAAHV7NV0AAAAAAAAAAAAAAAAkABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZF91
-          bml2ZXJzYWwvVVQJAAPuTLFqWlmxanV4CwABBAAAAAAE6QMAAFBLAwQUAAAACAB1ezVdsqJfX0YA
-          AABJAAAAMAAcAEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWRfdW5pdmVyc2FsL2J1aWxkLmdyYWRs
-          ZVVUCQAD7kyxag5RsWp1eAsAAQQAAAAABOkDAAAryClNz8wrVqjmUgCCzBQF9eT8XL3EvJSi/MwU
-          vcSCgpzM5MSSzPw8dYWy1KJiIENB3ULPXM9YXQEkWamQlphTnMpVywUAUEsDBAoAAAAAAHV7NV0A
-          AAAAAAAAAAAAAAAsABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZF91bml2ZXJzYWwvLmdpdGh1
-          Yi9VVAkAA+5MsWpaWbFqdXgLAAEEAAAAAATpAwAAUEsDBAoAAAAAAHV7NV0AAAAAAAAAAAAAAAA2
-          ABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZF91bml2ZXJzYWwvLmdpdGh1Yi93b3JrZmxvd3Mv
-          VVQJAAPuTLFqW1mxanV4CwABBAAAAAAE6QMAAFBLAwQUAAAACAB1ezVdPCU88TIBAAB+AgAAQwAc
-          AEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWRfdW5pdmVyc2FsLy5naXRodWIvd29ya2Zsb3dzL2J1
-          aWxkLWFway55bWxVVAkAA+5MsWoOUbFqdXgLAAEEAAAAAATpAwAAfVLBTsMwDL33K3zbKasQSEBP
-          64YmIYZAcEQIJW22ZmuTKI673ydpGOsmbbkkeX5+frGjeScLmJNqayh17YwK+/tLZnSRAeyN261b
-          s/+pFVruqyaClnDYAYTjumokFvAFHVcavrNsawTGqIiSieZIIwuCQIK0J9ZyL9EPIfTSYmIBMCCM
-          YrzyymjMg3S1M+Rn/d0FBkpPlm15z4+c4Fr5pvi/AQTz3ilBMacALztySo/iMZ/10uEQn9zcT87L
-          pcaw07J/6Ky/PaNvHK9bmZ+yE3jNZmKMjDxMH49O9GhQtRS0GcZ0yA0tPtSFgltbcETZiVY+ReqF
-          7pFtDQ+vcl6tA3bNW6perl7LT/a2XD4vyhWbf7B6pB5X+CNN0Lc2H8afh+FZ8phzu8sHbjjZlDUN
-          WPYLUEsDBAoAAAAAAHV7NV0AAAAAAAAAAAAAAAAoABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9p
-          ZF91bml2ZXJzYWwvYXBwL1VUCQAD7kyxalpZsWp1eAsAAQQAAAAABOkDAABQSwMEFAAAAAgAz4I1
-          XVIOi0sxAQAAPwIAADQAHABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkX3VuaXZlcnNhbC9hcHAv
-          YnVpbGQuZ3JhZGxlVVQJAAPGWbFqWlmxanV4CwABBAAAAAAE6QMAAG2SzU7DMBCE73kK3wwSXfX3
-          0msBiQtCghfY2puwqv+wnYoW9d1x2rQNFT7FX8az45GDaRt2SfxUoizWQipvAZ2OnjVgCIYVZvZO
-          Voeq6nmvdmgpBVQk5GYPaCwmX9esGA2sozxqiltgQ+96I2aL6og01diavPKu5qa36tZg2Iv+1xJa
-          x1uKCY28nLLsOvPp5EIyxoZyP/EMu2PFeOU1ifktfS0XEXIMcxiPHKvNKKlI5E5DDqfU65aN/tgF
-          SoPIkQxhogHpI3G9e3K4NqRFjSbRn/8h+qbFqJ9LMUmUrI+nRt4G/E6eVaO+9JEPmS3vCfJ3lvcP
-          4qqIbTGCsr3Wcuizl/SaAjlNTvElO9tgyJLLx7aF9LEBUoZDIgj46Ze3AMp3kYP9ynk7W05gCovu
-          RfwCUEsDBAoAAAAAAHV7NV0ygUCLGQAAABkAAAA6ABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9p
-          ZF91bml2ZXJzYWwvYXBwL3Byb2d1YXJkLXJ1bGVzLnByb1VUCQAD7kyxag5RsWp1eAsAAQQAAAAA
-          BOkDAAAjIEFsbWFzIE9mZmljaWFsIEJSIHYwLjEKUEsDBAoAAAAAAHV7NV0AAAAAAAAAAAAAAAAs
-          ABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZF91bml2ZXJzYWwvYXBwL3NyYy9VVAkAA+5MsWpb
-          WbFqdXgLAAEEAAAAAATpAwAAUEsDBAoAAAAAAHV7NV0AAAAAAAAAAAAAAAAxABwAQWxtYXNfT2Zm
-          aWNpYWxfQlJfQW5kcm9pZF91bml2ZXJzYWwvYXBwL3NyYy9tYWluL1VUCQAD7kyxaltZsWp1eAsA
-          AQQAAAAABOkDAABQSwMECgAAAAAAdXs1XQAAAAAAAAAAAAAAADUAHABBbG1hc19PZmZpY2lhbF9C
-          Ul9BbmRyb2lkX3VuaXZlcnNhbC9hcHAvc3JjL21haW4vcmVzL1VUCQAD7kyxaltZsWp1eAsAAQQA
-          AAAABOkDAABQSwMECgAAAAAAdXs1XQAAAAAAAAAAAAAAAEEAHABBbG1hc19PZmZpY2lhbF9CUl9B
-          bmRyb2lkX3VuaXZlcnNhbC9hcHAvc3JjL21haW4vcmVzL21pcG1hcC1oZHBpL1VUCQAD7kyxaltZ
-          sWp1eAsAAQQAAAAABOkDAABQSwMECgAAAAAAdXs1XQAAAAAAAAAAAAAAAD4AHABBbG1hc19PZmZp
-          Y2lhbF9CUl9BbmRyb2lkX3VuaXZlcnNhbC9hcHAvc3JjL21haW4vcmVzL2RyYXdhYmxlL1VUCQAD
-          7kyxaltZsWp1eAsAAQQAAAAABOkDAABQSwMECgAAAAAAdXs1XQAAAAAAAAAAAAAAADwAHABBbG1h
-          c19PZmZpY2lhbF9CUl9BbmRyb2lkX3VuaXZlcnNhbC9hcHAvc3JjL21haW4vcmVzL3ZhbHVlcy9V
-          VAkAA+5MsWpbWbFqdXgLAAEEAAAAAATpAwAAUEsDBBQAAAAIAHV7NV2Ei7ExzwAAAOEBAABGABwA
-          QWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZF91bml2ZXJzYWwvYXBwL3NyYy9tYWluL3Jlcy92YWx1
-          ZXMvc3R5bGVzLnhtbFVUCQAD7kyxag5RsWp1eAsAAQQAAAAABOkDAACV0btuwzAMBdA9X2Eoe+wM
-          faBQDDhGO/UxtD9AyLRDVBIDkW6Qv6/iJECHonA133MJijah8JgcSr0o8rOiR49FhIAb87HDgKvG
-          B5C3vidH4E2xh4RRNwZil5i6hwmU5+gLKKacWr1y45Q4biGZc/FUTorh0n3lPUd9gkD+aGqBKLY8
-          hf42B4odH55p2Om7go4yjenBC87hcjUte85wWd1XzbqaQyN80QCXzf7P3Uk0zuUPzO62vWkf7+Yv
-          vAX3OSQeY/frUFtOp6gXtvxx1G9QSwMEFAAAAAgAdXs1Xe6ZkheTAAAAWwEAAEYAHABBbG1hc19P
-          ZmZpY2lhbF9CUl9BbmRyb2lkX3VuaXZlcnNhbC9hcHAvc3JjL21haW4vcmVzL3ZhbHVlcy9jb2xv
-          cnMueG1sVVQJAAPuTLFqDlGxanV4CwABBAAAAAAE6QMAAIXQTQ7CIBAF4L2naOoBClgpTbBJC849
-          EIkxsZDwEz2+4MK4EJ3tfJk3edyb4JLXJkybJg/X7uZ8Y9VqDu3p0k5bxNCMEe9eiy9IK3/ODBNM
-          CakzpbWxMUMq9uI4/IOkJCNJAOoymkc5CAMwEHW2pmjKh6Oc++VHcEg5OYQsd0yOI63Lu/L2aks5
-          AAvr5Vvy7qPOJ1BLAwQUAAAACADPgjVdHwLDyG4CAAC1CAAARAAYAAAAAAABAAAApIEsCwAAQWxt
-          YXNfT2ZmaWNpYWxfQlJfQW5kcm9pZF91bml2ZXJzYWwvYXBwL3NyYy9tYWluL0FuZHJvaWRNYW5p
-          ZmVzdC54bWxVVAUAA8ZZsWp1eAsAAQQAAAAABOkDAABQSwECHgMKAAAAAAB1ezVdAAAAAAAAAAAA
-          AAAANgAYAAAAAAAAABAA7UUYDgAAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZF91bml2ZXJzYWwv
-          YXBwL3NyYy9tYWluL2phdmEvVVQFAAPuTLFqdXgLAAEEAAAAAATpAwAAUEsBAh4DCgAAAAAAdXs1
-          XQAAAAAAAAAAAAAAADkAGAAAAAAAAAAQAO1FiA4AAEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWRf
-          dW5pdmVyc2FsL2FwcC9zcmMvbWFpbi9qYXZhL2t6L1VUBQAD7kyxanV4CwABBAAAAAAE6QMAAFBLAQIe
-          AwoAAAAAAHV7NV0AAAAAAAAAAAAAAABHABgAAAAAAAAAEADtRfsOAABBbG1hc19PZmZpY2lhbF9C
-          Ul9BbmRyb2lkX3VuaXZlcnNhbC9hcHAvc3JjL21haW4vamF2YS9rei9hbG1hc29mZmljaWFsL1VUBQAD
-          7kyxanV4CwABBAAAAAAE6QMAAFBLAQIeAwoAAAAAAHV7NV0AAAAAAAAAAAAAAABKABgAAAAAAAAA
-          EADtRXwPAABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkX3VuaXZlcnNhbC9hcHAvc3JjL21haW4v
-          amF2YS9rei9hbG1hc29mZmljaWFsL2JyL1VUBQAD7kyxanV4CwABBAAAAAAE6QMAAFBLAQIeAxQA
-          AAAIAPyCNV3gb2I0dQcAAPgQAABhABgAAAAAAAEAAACkgQAQAABBbG1hc19PZmZpY2lhbF9CUl9B
-          bmRyb2lkX3VuaXZlcnNhbC9hcHAvc3JjL21haW4vamF2YS9rei9hbG1hc29mZmljaWFsL2JyL1Nj
-          cmVlblNoYXJlU2VydmljZS5qYXZhVVQFAAMcWrFqdXgLAAEEAAAAAATpAwAAUEsBAh4DFAAAAAgA
-          IIM1XRq20v2BEwAAWzYAAFsAGAAAAAAAAQAAAKSBEBgAAEFsbWFzX09mZmljaWFsX0JSX0FuZHJv
-          aWRfdW5pdmVyc2FsL2FwcC9zcmMvbWFpbi9qYXZhL2t6L2FsbWFzb2ZmaWNpYWwvYnIvTWFpbkFj
-          dGl2aXR5LmphdmFVVAUAA1tasWp1eAsAAQQAAAAABOkDAABQSwECHgMUAAAACAD8gjVd1BikH8gT
-          AACzOwAAWwAYAAAAAAABAAAApIEmLAAAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZF91bml2ZXJz
-          YWwvYXBwL3NyYy9tYWluL2phdmEva3ovYWxtYXNvZmZpY2lhbC9ici9Wb2ljZVNlcnZpY2UuamF2
-          YVVUBQADHFqxanV4CwABBAAAAAAE6QMAAFBLAQIeAxQAAAAIAHV7NV2zPuqrsgAAAEwBAAAzABgA
-          AAAAAAEAAACkgYNAAABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkX3VuaXZlcnNhbC9zZXR0aW5n
-          cy5ncmFkbGVVVAUAA+5MsWp1eAsAAQQAAAAABOkDAABQSwECHgMUAAAACAAggzVdBg3HqWcBAAAJ
-          AgAALQAYAAAAAAABAAAApIGiQQAAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZF91bml2ZXJzYWwv
-          UkVBRE1FLm1kVVQFAANbWrFqdXgLAAEEAAAAAATpAwAAUEsBAh4DFAAAAAgAdXs1XazxKYNIAAAA
-          TAAAADUAGAAAAAAAAQAAAKSBcEMAAEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWRfdW5pdmVyc2Fs
-          L2dyYWRsZS5wcm9wZXJ0aWVzVVQFAAPuTLFqdXgLAAEEAAAAAATpAwAAUEsFBgAAAAAbABsAug0A
-          ACdEAAAAAA==
+          cat > /tmp/br.b64 <<'B64'
+          UEsDBAoAAAAAAHV7NV0AAAAAAAAAAAAAAAAaABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZC9V
+          VAkAA+5MsWruTLFqdXgLAAEEAAAAAATpAwAAUEsDBBQAAAAIAHV7NV2yol9fRgAAAEkAAAAmABwA
+          QWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZC9idWlsZC5ncmFkbGVVVAkAA+5MsWruTLFqdXgLAAEE
+          AAAAAATpAwAAK8gpTc/MK1ao5lIAgswUBfXk/Fy9xLyUovzMFL3EgoKczOTEksz8PHWFstSiYiBD
+          Qd1Cz1zPWF0BJFmpkJaYU5zKVcsFAFBLAwQKAAAAAAB1ezVdAAAAAAAAAAAAAAAAIgAcAEFsbWFz
+          X09mZmljaWFsX0JSX0FuZHJvaWQvLmdpdGh1Yi9VVAkAA+5MsWruTLFqdXgLAAEEAAAAAATpAwAA
+          UEsDBAoAAAAAAHV7NV0AAAAAAAAAAAAAAAAsABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZC8u
+          Z2l0aHViL3dvcmtmbG93cy9VVAkAA+5MsWruTLFqdXgLAAEEAAAAAATpAwAAUEsDBBQAAAAIAHV7
+          NV08JTzxMgEAAH4CAAA5ABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZC8uZ2l0aHViL3dvcmtm
+          bG93cy9idWlsZC1hcGsueW1sVVQJAAPuTLFq7kyxanV4CwABBAAAAAAE6QMAAH1SwU7DMAy99yt8
+          2ymrEEhAT+uGJiGGQHBECCVttmZrkyiOu98naRjrJm25JHl+fn6xo3knC5iTamsode2MCvv7S2Z0
+          kQHsjdutW7P/qRVa7qsmgpZw2AGE47pqJBbwBR1XGr6zbGsExqiIkonmSCMLgkCCtCfWci/RDyH0
+          0mJiATAgjGK88spozIN0tTPkZ/3dBQZKT5Ztec+PnOBa+ab4vwEE894pQTGnAC87ckqP4jGf9dLh
+          EJ/c3E/Oy6XGsNOyf+isvz2jbxyvW5mfshN4zWZijIw8TB+PTvRoULUUtBnGdMgNLT7UhYJbW3BE
+          2YlWPkXqhe6RbQ0Pr3JerQN2zVuqXq5ey0/2tlw+L8oVm3+weqQeV/gjTdC3Nh/Gn4fhWfKYc7vL
+          B2442ZQ1DVj2C1BLAwQKAAAAAAB1ezVdAAAAAAAAAAAAAAAAHgAcAEFsbWFzX09mZmljaWFsX0JS
+          X0FuZHJvaWQvYXBwL1VUCQAD7kyxau5MsWp1eAsAAQQAAAAABOkDAABQSwMEFAAAAAgAdXs1XS9l
+          DZXyAAAAzAEAACoAHABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkL2FwcC9idWlsZC5ncmFkbGVV
+          VAkAA+5MsWruTLFqdXgLAAEEAAAAAATpAwAAfZDLTsMwEEX3/grvDBK1WhD8QAsSG4QEPzCJx9Go
+          fskPRIvy7ziNSwMLZufjq+PrCaYM5BL/YrwOKS56byU4FT0pCSEY6iGTd4KNjDXe0g4spgA9crE/
+          SjAWkteaegIjuyhOmWoLZPBN7fndPTshhRqKyVvvNA1NNc3isWf1j3IaS25S3j78kAxxwNzeOcMP
+          jKnqtl4h3/ylL7U+F2u5ketZPM79ukJGvR8CpkW5iAYh4YK0GqQPjw46g4prMAl/3YfohwJRPdUV
+          JF777ea/vy74lTinVm29Kx8yWTqizJ9ZXN/wSyKWKpL1eFnF2LqP7BtQSwMECgAAAAAAdXs1XTKB
+          QIsZAAAAGQAAADAAHABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkL2FwcC9wcm9ndWFyZC1ydWxl
+          cy5wcm9VVAkAA+5MsWruTLFqdXgLAAEEAAAAAATpAwAAIyBBbG1hcyBPZmZpY2lhbCBCUiB2MC4x
+          ClBLAwQKAAAAAAB1ezVdAAAAAAAAAAAAAAAAIgAcAEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWQv
+          YXBwL3NyYy9VVAkAA+5MsWruTLFqdXgLAAEEAAAAAATpAwAAUEsDBAoAAAAAAHV7NV0AAAAAAAAA
+          AAAAAAAnABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZC9hcHAvc3JjL21haW4vVVQJAAPuTLFq
+          7kyxanV4CwABBAAAAAAE6QMAAFBLAwQKAAAAAAB1ezVdAAAAAAAAAAAAAAAAKwAcAEFsbWFzX09m
+          ZmljaWFsX0JSX0FuZHJvaWQvYXBwL3NyYy9tYWluL3Jlcy9VVAkAA+5MsWruTLFqdXgLAAEEAAAA
+          AATpAwAAUEsDBAoAAAAAAHV7NV0AAAAAAAAAAAAAAAA3ABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5k
+          cm9pZC9hcHAvc3JjL21haW4vcmVzL21pcG1hcC1oZHBpL1VUCQAD7kyxau5MsWp1eAsAAQQAAAAA
+          BOkDAABQSwMECgAAAAAAdXs1XQAAAAAAAAAAAAAAADQAHABBbG1hc19PZmZpY2lhbF9CUl9BbmRy
+          b2lkL2FwcC9zcmMvbWFpbi9yZXMvZHJhd2FibGUvVVQJAAPuTLFq7kyxanV4CwABBAAAAAAE6QMA
+          AFBLAwQKAAAAAAB1ezVdAAAAAAAAAAAAAAAAMgAcAEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWQv
+          YXBwL3NyYy9tYWluL3Jlcy92YWx1ZXMvVVQJAAPuTLFq7kyxanV4CwABBAAAAAAE6QMAAFBLAwQU
+          AAAACAB1ezVdhIuxMc8AAADhAQAAPAAcAEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWQvYXBwL3Ny
+          Yy9tYWluL3Jlcy92YWx1ZXMvc3R5bGVzLnhtbFVUCQAD7kyxau5MsWp1eAsAAQQAAAAABOkDAACV
+          0btuwzAMBdA9X2Eoe+wMfaBQDDhGO/UxtD9AyLRDVBIDkW6Qv6/iJECHonA133MJijah8JgcSr0o
+          8rOiR49FhIAb87HDgKvGB5C3vidH4E2xh4RRNwZil5i6hwmU5+gLKKacWr1y45Q4biGZc/FUTorh
+          0n3lPUd9gkD+aGqBKLY8hf42B4odH55p2Om7go4yjenBC87hcjUte85wWd1XzbqaQyN80QCXzf7P
+          3Uk0zuUPzO62vWkf7+YvvAX3OSQeY/frUFtOp6gXtvxx1G9QSwMEFAAAAAgAdXs1Xe6ZkheTAAAA
+          WwEAADwAHABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkL2FwcC9zcmMvbWFpbi9yZXMvdmFsdWVz
+          L2NvbG9ycy54bWxVVAkAA+5MsWruTLFqdXgLAAEEAAAAAATpAwAAhdBNDsIgEAXgvado6gEKWClN
+          sEkLzj0QiTGxkPATPb7gwrgQne18mTd53JvgktcmTJsmD9fu5nxj1WoO7enSTlvE0IwR716LL0gr
+          f84ME0wJqTOltbExQyr24jj8g6QkI0kA6jKaRzkIAzAQdbamaMqHo5z75UdwSDk5hCx3TI4jrcu7
+          8vZqSzkAC+vlW/Luo84nUEsDBBQAAAAIAHV7NV263IOrNgIAAF8HAAA6ABwAQWxtYXNfT2ZmaWNp
+          YWxfQlJfQW5kcm9pZC9hcHAvc3JjL21haW4vQW5kcm9pZE1hbmlmZXN0LnhtbFVUCQAD7kyxau5M
+          sWp1eAsAAQQAAAAABOkDAAC1lV1zojAYhe/9FUzuhe3djiN2EXHLjhIH0F46KbxoWkjYJHTrv98g
+          4mc/draWu7w5eXKSHJL+7UuRG88gJOXMRjfmN2QAS3hK2cpGlcq639HtoNMvCKMZSGVoOZM9wlLB
+          aWqjtVJlz7JksoaCSHNXNxNeWKR8sgRIa1dDg07H0F+/kiC7JYiCynpSY9ffY6QAG7WEg8D0g9gL
+          Ay9GhjX4T0TouTgcLZ35yMefwMxwFC8DHPtj33ViHwfRJ2BjHHo/QzwPRsvICxe+610Vtpz6bohn
+          dzi4Ntcb+c5yFuJfnlvvwZbe4H9XICjIZrJtpSTJE1nB2UQ6HmZOKqZTI8wHsdLFg0drT2napCxz
+          mhCl7ey5LY7kOf8z1HNUpY2UqABdSHLyALmNnMnUiQw8rk9ucqlSOr/a2A+pNjlYcd0ynVxHGmcZ
+          TSjJ2/g2lhJFn6na7CvHqGaJ5pRQ5ux06FUhvJRcKEjPnR9rZCIAGNb7wdR2C2xUDxKEKjQ4GdGn
+          TGlRN6O5AnHatzf95pE3g81GY04dP9gfyAlEnwOsuNi8j2lV5sSZB+6dF17A+taZ3S9by8L37q+y
+          lpE3duaT+CqsYYjvI2c48V6npUSRowg02SR1HHkdR53Gfe+aS2WjR07Zx3t86GgDfBxqCeKZJvBe
+          phdcC6JG91GmM5LLN0QZF7ASvGLpjhVvSo0vaCJ4ueYMDlfKvzqLtv9JtCbiC/1BSslM8EfYJuvo
+          xjq6ovRbabWP5aDzF1BLAwQKAAAAAAB1ezVdAAAAAAAAAAAAAAAALAAcAEFsbWFzX09mZmljaWFs
+          X0JSX0FuZHJvaWQvYXBwL3NyYy9tYWluL2phdmEvVVQJAAPuTLFq7kyxanV4CwABBAAAAAAE6QMA
+          AFBLAwQKAAAAAAB1ezVdAAAAAAAAAAAAAAAALwAcAEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWQv
+          YXBwL3NyYy9tYWluL2phdmEva3ovVVQJAAPuTLFq7kyxanV4CwABBAAAAAAE6QMAAFBLAwQKAAAA
+          AAB1ezVdAAAAAAAAAAAAAAAAPQAcAEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWQvYXBwL3NyYy9t
+          YWluL2phdmEva3ovYWxtYXNvZmZpY2lhbC9VVAkAA+5MsWruTLFqdXgLAAEEAAAAAATpAwAAUEsD
+          BAoAAAAAAHV7NV0AAAAAAAAAAAAAAABAABwAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZC9hcHAv
+          c3JjL21haW4vamF2YS9rei9hbG1hc29mZmljaWFsL2JyL1VUCQAD7kyxau5MsWp1eAsAAQQAAAAA
+          BOkDAABQSwMEFAAAAAgAgXs1XVTLrWHeBAAA1wwAAFcAHABBbG1hc19PZmZpY2lhbF9CUl9BbmRy
+          b2lkL2FwcC9zcmMvbWFpbi9qYXZhL2t6L2FsbWFzb2ZmaWNpYWwvYnIvU2NyZWVuU2hhcmVTZXJ2
+          aWNlLmphdmFVVAkAAwJNsWruTLFqdXgLAAEEAAAAAATpAwAAlVbNbttGEL77KTY6UYC6doygSGuk
+          KC3JCVv9gVQc5ESsyJW0DbnLLley3cKAk2vvfYDeCzSH9lC06CtIeYQ+SWeXpESKtI3uQSK5H4cz
+          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
+          Cqks0XVOVi26U+cRx2xmp9/WepPVPaCbt5VbjfNn5TjvlCF3nhhC1VQ+Z5nR6m6np2zbxoyKrNY3
+          vsqfzBS97mudWX8DbIA8Drv6MkLk9mF3bqLedWe1mBBCa9X6D1BLAwQUAAAACAB1ezVdsz7qq7IA
+          AABMAQAAKQAcAEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWQvc2V0dGluZ3MuZ3JhZGxlVVQJAAPu
+          TLFq7kyxanV4CwABBAAAAAAE6QMAAKWPsQrCMBiE9zxFcFEXH0BwqEVBURuie/lpfkMkyR+SVBDp
+          u1tFiji4eON33HEXbKuN34MHjQ595nfGe0UMlEymaDC90VOaSFucTAfg4Iq+7HMR7AfWEZRF8eoW
+          FPNgdqxjCgN6hb65SUxk22zo94A9KZwlzBP5DdfFZldXh1rIarsqT7Vcieo4/ffBc2QkyiLSBZs8
+          8+CQL/iosA5SdT6bxoBdyhEzvrGtQj6eQwhj9gBQSwMEFAAAAAgAdXs1XVa44Mu5AgAAYwQAACMA
+          HABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkL1JFQURNRS5tZFVUCQAD7kyxau5MsWp1eAsAAQQA
+          AAAABOkDAABdU0tu2zAQ3esUA3STILBkd5UaKArFRVojnxr+oFuNpLHMWCIJkrLjXdBDZNFde4S2
+          QYEivYNzhZ6kQ8YpnC4s0OR83pv35gWk5xfpBD6cng4H6Tn8ufkKJ+fp4AzGs8lkmEKhGo1SKAkH
+          q27cO4yiVJZGiRKO4+7R3jNqDdoop9xGE8yVeV5nPIqjaNjomhqSjkoQEnzBftT5D0KJZgmNykVN
+          MBvG/D5orVMNXCnOqYVc2j5kWDdo1XwuCqz7SeLf3hilmtfpZJpepp1ut5f53FMjSJYWCpS7AujI
+          wFq4BbgFgcWGwCeGyj5jRKYR1npOFccGKo0ojNILJQmOQConfF/HIdZnPLYE69C1ljy67eft3fYn
+          /349fOLv/cPt9ncGKEt++rK9e7jZfgvf79s74JhbPv7gmPsAeeLQOMhb5xiC0iQtBKIC6+czfVJC
+          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
+          cmMvbWFpbi9VVAUAA+5MsWp1eAsAAQQAAAAABOkDAABQSwECHgMKAAAAAAB1ezVdAAAAAAAAAAAA
+          AAAAKwAYAAAAAAAAABAA7UVPBgAAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZC9hcHAvc3JjL21h
+          aW4vcmVzL1VUBQAD7kyxanV4CwABBAAAAAAE6QMAAFBLAQIeAwoAAAAAAHV7NV0AAAAAAAAAAAAA
+          AAA3ABgAAAAAAAAAEADtRbQGAABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkL2FwcC9zcmMvbWFp
+          bi9yZXMvbWlwbWFwLWhkcGkvVVQFAAPuTLFqdXgLAAEEAAAAAATpAwAAUEsBAh4DCgAAAAAAdXs1
+          XQAAAAAAAAAAAAAAADQAGAAAAAAAAAAQAO1FJQcAAEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWQv
+          YXBwL3NyYy9tYWluL3Jlcy9kcmF3YWJsZS9VVAUAA+5MsWp1eAsAAQQAAAAABOkDAABQSwECHgMK
+          AAAAAAB1ezVdAAAAAAAAAAAAAAAAMgAYAAAAAAAAABAA7UWTBwAAQWxtYXNfT2ZmaWNpYWxfQlJf
+          QW5kcm9pZC9hcHAvc3JjL21haW4vcmVzL3ZhbHVlcy9VVAUAA+5MsWp1eAsAAQQAAAAABOkDAABQ
+          SwECHgMUAAAACAB1ezVdhIuxMc8AAADhAQAAPAAYAAAAAAABAAAApIH/BwAAQWxtYXNfT2ZmaWNp
+          YWxfQlJfQW5kcm9pZC9hcHAvc3JjL21haW4vcmVzL3ZhbHVlcy9zdHlsZXMueG1sVVQFAAPuTLFq
+          dXgLAAEEAAAAAATpAwAAUEsBAh4DFAAAAAgAdXs1Xe6ZkheTAAAAWwEAADwAGAAAAAAAAQAAAKSB
+          RAkAAEFsbWFzX09mZmljaWFsX0JSX0FuZHJvaWQvYXBwL3NyYy9tYWluL3Jlcy92YWx1ZXMvY29s
+          b3JzLnhtbFVUBQAD7kyxanV4CwABBAAAAAAE6QMAAFBLAQIeAxQAAAAIAHV7NV263IOrNgIAAF8H
+          AAA6ABgAAAAAAAEAAACkgU0KAABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkL2FwcC9zcmMvbWFp
+          bi9BbmRyb2lkTWFuaWZlc3QueG1sVVQFAAPuTLFqdXgLAAEEAAAAAATpAwAAUEsBAh4DCgAAAAAA
+          dXs1XQAAAAAAAAAAAAAAACwAGAAAAAAAAAAQAO1F9wwAAEFsbWFzX09mZmljaWFsX0JSX0FuZHJv
+          aWQvYXBwL3NyYy9tYWluL2phdmEvVVQFAAPuTLFqdXgLAAEEAAAAAATpAwAAUEsBAh4DCgAAAAAA
+          dXs1XQAAAAAAAAAAAAAAAC8AGAAAAAAAAAAQAO1FXQ0AAEFsbWFzX09mZmljaWFsX0JSX0FuZHJv
+          aWQvYXBwL3NyYy9tYWluL2phdmEva3ovVVQFAAPuTLFqdXgLAAEEAAAAAATpAwAAUEsBAh4DCgAA
+          AAAAdXs1XQAAAAAAAAAAAAAAAD0AGAAAAAAAAAAQAO1Fxg0AAEFsbWFzX09mZmljaWFsX0JSX0Fu
+          ZHJvaWQvYXBwL3NyYy9tYWluL2phdmEva3ovYWxtYXNvZmZpY2lhbC9VVAUAA+5MsWp1eAsAAQQA
+          AAAABOkDAABQSwECHgMKAAAAAAB1ezVdAAAAAAAAAAAAAAAAQAAYAAAAAAAAABAA7UU9DgAAQWxt
+          YXNfT2ZmaWNpYWxfQlJfQW5kcm9pZC9hcHAvc3JjL21haW4vamF2YS9rei9hbG1hc29mZmljaWFs
+          L2JyL1VUBQAD7kyxanV4CwABBAAAAAAE6QMAAFBLAQIeAxQAAAAIAIF7NV1Uy61h3gQAANcMAABX
+          ABgAAAAAAAEAAACkgbcOAABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkL2FwcC9zcmMvbWFpbi9q
+          YXZhL2t6L2FsbWFzb2ZmaWNpYWwvYnIvU2NyZWVuU2hhcmVTZXJ2aWNlLmphdmFVVAUAAwJNsWp1
+          eAsAAQQAAAAABOkDAABQSwECHgMUAAAACAB1ezVdT9IsCn0MAAAoKgAAUQAYAAAAAAABAAAApIEm
+          FAAAQWxtYXNfT2ZmaWNpYWxfQlJfQW5kcm9pZC9hcHAvc3JjL21haW4vamF2YS9rei9hbG1hc29m
+          ZmljaWFsL2JyL01haW5BY3Rpdml0eS5qYXZhVVQFAAPuTLFqdXgLAAEEAAAAAATpAwAAUEsBAh4D
+          FAAAAAgAdXs1XZpxuOoNBAAAjwoAAFEAGAAAAAAAAQAAAKSBLiEAAEFsbWFzX09mZmljaWFsX0JS
+          X0FuZHJvaWQvYXBwL3NyYy9tYWluL2phdmEva3ovYWxtYXNvZmZpY2lhbC9ici9Wb2ljZVNlcnZp
+          Y2UuamF2YVVUBQAD7kyxanV4CwABBAAAAAAE6QMAAFBLAQIeAxQAAAAIAHV7NV2zPuqrsgAAAEwB
+          AAApABgAAAAAAAEAAACkgcYlAABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkL3NldHRpbmdzLmdy
+          YWRsZVVUBQAD7kyxanV4CwABBAAAAAAE6QMAAFBLAQIeAxQAAAAIAHV7NV1WuODLuQIAAGMEAAAj
+          ABgAAAAAAAEAAACkgdsmAABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkL1JFQURNRS5tZFVUBQAD
+          7kyxanV4CwABBAAAAAAE6QMAAFBLAQIeAxQAAAAIAHV7NV2s8SmDSAAAAEwAAAArABgAAAAAAAEA
+          AACkgfEpAABBbG1hc19PZmZpY2lhbF9CUl9BbmRyb2lkL2dyYWRsZS5wcm9wZXJ0aWVzVVQFAAPu
+          TLFqdXgLAAEEAAAAAATpAwAAUEsFBgAAAAAbABsArAwAAJ4qAAAAAA==
           B64
-          base64 -d /tmp/brv04.b64 > /tmp/brv04.zip
-          unzip -q /tmp/brv04.zip
+          base64 -d /tmp/br.b64 > /tmp/br.zip
+          unzip -q /tmp/br.zip -d "$GITHUB_WORKSPACE"
+
+      - name: Make universal Android 5+ build
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path("Almas_Official_BR_Android")
+
+          p = root / "app/build.gradle"
+          s = p.read_text()
+          s = s.replace("applicationId 'kz.almasofficial.br'", "applicationId 'kz.almasofficial.br.universal'")
+          s = s.replace("minSdk 26", "minSdk 21")
+          s = s.replace("versionCode 1", "versionCode 2")
+          s = s.replace("versionName '0.1.0'", "versionName '0.2.0-universal'")
+          p.write_text(s)
+
+          p = root / "app/src/main/AndroidManifest.xml"
+          s = p.read_text().replace('android:label="ALMAS OFFICAL"', 'android:label="ALMAS OFFICAL Universal"')
+          p.write_text(s)
+
+          p = root / "app/src/main/java/kz/almasofficial/br/MainActivity.java"
+          s = p.read_text()
+          s = s.replace("""    private List<String> missingPermissions() {
+              List<String> out = new ArrayList<>();
+              if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                  out.add(Manifest.permission.RECORD_AUDIO);
+              }
+              if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                  out.add(Manifest.permission.POST_NOTIFICATIONS);
+              }
+              return out;
+          }
+          """, """    private List<String> missingPermissions() {
+              List<String> out = new ArrayList<>();
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                  if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                      out.add(Manifest.permission.RECORD_AUDIO);
+                  }
+                  if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                      out.add(Manifest.permission.POST_NOTIFICATIONS);
+                  }
+              }
+              return out;
+          }
+          """)
+          s = s.replace("        requestPermissions(missing.toArray(new String[0]), REQ_PERMS);",
+                        "        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {\n            requestPermissions(missing.toArray(new String[0]), REQ_PERMS);\n        } else {\n            refreshReadiness();\n        }")
+          s = s.replace("""        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+              requestNeededPermissions();
+              return;
+          }
+          Intent i = new Intent(this, VoiceService.class);
+          i.putExtra("room", roomCode);
+          startForegroundService(i);
+          """, """        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                  checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+              requestNeededPermissions();
+              return;
+          }
+          Intent i = new Intent(this, VoiceService.class);
+          i.putExtra("room", roomCode);
+          startServiceCompat(i);
+          """)
+          s = s.replace('            startForegroundService(s);', '            startServiceCompat(s);')
+          s = s.replace("    private void launchBlackRussia() {",
+                        "    private void startServiceCompat(Intent intent) {\n        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {\n            startForegroundService(intent);\n        } else {\n            startService(intent);\n        }\n    }\n\n    private void launchBlackRussia() {")
+          p.write_text(s)
+
+          p = root / "app/src/main/java/kz/almasofficial/br/VoiceService.java"
+          s = p.read_text()
+          s = s.replace("""        NotificationManager nm = getSystemService(NotificationManager.class);
+          nm.createNotificationChannel(new NotificationChannel(CHANNEL, "ALMAS Voice", NotificationManager.IMPORTANCE_LOW));
+          """, """        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+              NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+              nm.createNotificationChannel(new NotificationChannel(CHANNEL, "ALMAS Voice", NotificationManager.IMPORTANCE_LOW));
+          }
+          """)
+          s = s.replace("""        Notification n = new Notification.Builder(this, CHANNEL)
+                  .setContentTitle("ALMAS OFFICAL • Voice")
+                  .setContentText("Бөлме: " + room)
+                  .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+                  .setOngoing(true)
+                  .build();
+          """, """        Notification.Builder builder;
+          if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+              builder = new Notification.Builder(this, CHANNEL);
+          } else {
+              builder = new Notification.Builder(this).setPriority(Notification.PRIORITY_LOW);
+          }
+          Notification n = builder
+                  .setContentTitle("ALMAS OFFICAL • Voice")
+                  .setContentText("Бөлме: " + room)
+                  .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+                  .setOngoing(true)
+                  .build();
+          """)
+          p.write_text(s)
+
+          p = root / "app/src/main/java/kz/almasofficial/br/ScreenShareService.java"
+          s = p.read_text()
+          s = s.replace("""        NotificationManager nm = getSystemService(NotificationManager.class);
+          nm.createNotificationChannel(new NotificationChannel(CHANNEL, "ALMAS Screen Share", NotificationManager.IMPORTANCE_LOW));
+          """, """        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+              NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+              nm.createNotificationChannel(new NotificationChannel(CHANNEL, "ALMAS Screen Share", NotificationManager.IMPORTANCE_LOW));
+          }
+          """)
+          s = s.replace("""        Notification n = new Notification.Builder(this, CHANNEL)
+                  .setContentTitle("ALMAS OFFICAL • 1080p Screen Share")
+                  .setContentText("Экран capture жұмыс істеп тұр")
+                  .setSmallIcon(android.R.drawable.presence_video_online)
+                  .setOngoing(true)
+                  .build();
+          """, """        Notification.Builder builder;
+          if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+              builder = new Notification.Builder(this, CHANNEL);
+          } else {
+              builder = new Notification.Builder(this).setPriority(Notification.PRIORITY_LOW);
+          }
+          Notification n = builder
+                  .setContentTitle("ALMAS OFFICAL • 1080p Screen Share")
+                  .setContentText("Экран capture жұмыс істеп тұр")
+                  .setSmallIcon(android.R.drawable.presence_video_online)
+                  .setOngoing(true)
+                  .build();
+          """)
+          p.write_text(s)
+          PY
+
+      - name: Apply v0.3 floating companion
+        shell: bash
+        run: |
+          cat > Almas_Official_BR_Android/app/src/main/java/kz/almasofficial/br/MainActivity.java <<'JAVA'
+          package kz.almasofficial.br;
+          
+          import android.Manifest;
+          import android.app.Activity;
+          import android.content.*;
+          import android.content.pm.PackageManager;
+          import android.graphics.Color;
+          import android.graphics.Typeface;
+          import android.graphics.drawable.GradientDrawable;
+          import android.media.projection.MediaProjectionManager;
+          import android.net.Uri;
+          import android.os.*;
+          import android.provider.Settings;
+          import android.text.InputType;
+          import android.view.*;
+          import android.widget.*;
+          import java.util.*;
+          
+          public class MainActivity extends Activity {
+            static final int REQ_PERMS=2001, REQ_CAPTURE=2002;
+            static final String GAME="com.launcher.brgame", PREFS="almas_br";
+            final int BG=Color.rgb(7,9,15), CARD=Color.rgb(18,22,34), CARD2=Color.rgb(25,30,45);
+            final int PURPLE=Color.rgb(124,92,255), GREEN=Color.rgb(57,217,154), ORANGE=Color.rgb(255,183,77), MUTED=Color.rgb(153,162,184);
+            SharedPreferences prefs; String room,status; int queue;
+            TextView roomV,linkV,queueV,statusV,readyV; EditText queueInput; Button start;
+          
+            @Override public void onCreate(Bundle b){
+              super.onCreate(b);
+              prefs=getSharedPreferences(PREFS,MODE_PRIVATE);
+              room=prefs.getString("room","AST-"+UUID.randomUUID().toString().replace("-","").substring(0,6).toUpperCase(Locale.US));
+              status=prefs.getString("status","Кезектемін"); queue=prefs.getInt("queue",0);
+              handle(getIntent()); setContentView(ui()); refresh();
+            }
+            @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);handle(i);refresh();}
+            @Override protected void onResume(){super.onResume();refreshReady();}
+          
+            View ui(){
+              ScrollView s=new ScrollView(this); s.setFillViewport(true); s.setBackgroundColor(BG);
+              LinearLayout r=col(); r.setPadding(dp(16),dp(18),dp(16),dp(32)); s.addView(r);
+          
+              LinearLayout hero=card(PURPLE);
+              hero.addView(txt("ALMAS OFFICAL",28,Color.WHITE,true));
+              hero.addView(txt("BLACK RUSSIA • ASTANA COMPANION",12,Color.WHITE,true));
+              hero.addView(gap(8)); hero.addView(txt("VOICE • ROOM LINK • QUEUE • FLOATING",12,Color.WHITE,false)); r.addView(hero);
+          
+              r.addView(gap(14)); LinearLayout rc=card(CARD); rc.addView(sec("БӨЛМЕ / ROOM"));
+              roomV=txt("",21,Color.WHITE,true); linkV=txt("",12,MUTED,false); linkV.setTextIsSelectable(true);
+              rc.addView(roomV); rc.addView(gap(7)); rc.addView(linkV); rc.addView(gap(11));
+              LinearLayout lr=row(); Button copy=btn("Сілтемені көшіру",PURPLE), share=btn("Бөлісу",CARD2);
+              copy.setOnClickListener(v->copy()); share.setOnClickListener(v->share());
+              lr.addView(copy,weight()); lr.addView(gapH(8)); lr.addView(share,weight()); rc.addView(lr); r.addView(rc);
+          
+              r.addView(gap(14)); LinearLayout pc=card(CARD); LinearLayout ph=row();
+              ph.addView(sec("ҚОСЫЛҒАНДАР"),new LinearLayout.LayoutParams(0,-2,1)); ph.addView(txt("1 online",12,GREEN,true)); pc.addView(ph); pc.addView(gap(10));
+              LinearLayout person=row(); TextView av=txt("A",20,Color.WHITE,true); av.setGravity(Gravity.CENTER); av.setBackground(round(PURPLE,999));
+              person.addView(av,new LinearLayout.LayoutParams(dp(48),dp(48))); person.addView(gapH(11));
+              LinearLayout inf=col(); inf.setGravity(Gravity.CENTER_VERTICAL); inf.addView(txt("Almas • Сен",16,Color.WHITE,true)); inf.addView(txt("● Voice дайын • floating бет",12,GREEN,false));
+              person.addView(inf,new LinearLayout.LayoutParams(0,dp(50),1)); pc.addView(person); r.addView(pc);
+          
+              r.addView(gap(14)); LinearLayout qc=card(CARD); qc.addView(sec("ASTANA • ОЧЕРЕДЬ"));
+              queueV=txt("",30,ORANGE,true); statusV=txt("",14,ORANGE,true); qc.addView(queueV); qc.addView(statusV); qc.addView(gap(10));
+              LinearLayout qr=row(); queueInput=new EditText(this); queueInput.setSingleLine(); queueInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+              queueInput.setHint("Мысалы: 37"); queueInput.setHintTextColor(Color.rgb(100,109,132)); queueInput.setTextColor(Color.WHITE); queueInput.setTextSize(16);
+              queueInput.setPadding(dp(14),0,dp(14),0); queueInput.setBackground(round(CARD2,16)); if(queue>0)queueInput.setText(String.valueOf(queue));
+              Button save=btn("Сақтау",PURPLE); save.setOnClickListener(v->saveQueue());
+              qr.addView(queueInput,new LinearLayout.LayoutParams(0,dp(52),1)); qr.addView(gapH(8)); qr.addView(save,new LinearLayout.LayoutParams(dp(105),dp(52))); qc.addView(qr); qc.addView(gap(9));
+              LinearLayout sr=row(); Button q=btn("Кезектемін",CARD2), joined=btn("Серверге кірдім",CARD2);
+              q.setOnClickListener(v->setStatus("Кезектемін")); joined.setOnClickListener(v->setStatus("Серверге кірдім"));
+              sr.addView(q,weight()); sr.addView(gapH(8)); sr.addView(joined,weight()); qc.addView(sr); r.addView(qc);
+          
+              r.addView(gap(14)); LinearLayout fc=card(CARD); fc.addView(sec("VOICE / FLOATING"));
+              readyV=txt("",14,Color.WHITE,true); fc.addView(readyV); fc.addView(gap(9));
+              Button over=btn("Floating терезеге рұқсат",CARD2), perms=btn("Микрофон рұқсаттарын беру",CARD2), voice=btn("🎙 Voice + floating panel",PURPLE);
+              over.setOnClickListener(v->overlayPermission()); perms.setOnClickListener(v->askPerms()); voice.setOnClickListener(v->startVoice(false));
+              fc.addView(over); fc.addView(gap(8)); fc.addView(perms); fc.addView(gap(8)); fc.addView(voice); r.addView(fc);
+          
+              r.addView(gap(14)); LinearLayout tc=card(CARD); tc.addView(sec("ҚОСЫМША"));
+              Button screen=btn("▣ 1080p экран бөлісуді бастау",CARD2); screen.setOnClickListener(v->capture()); tc.addView(screen);
+              tc.addView(gap(8)); Button map=btn("⌖ Карта / teammate белгісі",CARD2); map.setOnClickListener(v->Toast.makeText(this,"Teammate auto-sync сервер қосылғанда іске қосылады.",Toast.LENGTH_LONG).show()); tc.addView(map); r.addView(tc);
+          
+              r.addView(gap(18)); start=btn("START • BLACK RUSSIA",PURPLE); start.setTextSize(18); start.setMinHeight(dp(64)); start.setOnClickListener(v->launch()); r.addView(start);
+              r.addView(gap(9)); r.addView(txt("START → Voice + floating панель → BLACK RUSSIA. Панель қолданбадан шықсаң да көрінеді.",12,MUTED,false));
+              return s;
+            }
+          
+            void refresh(){
+              if(roomV!=null)roomV.setText(room); if(linkV!=null)linkV.setText(link());
+              if(queueV!=null){queueV.setText(queue>0?"Очередь: "+queue:"Очередь: —");queueV.setTextColor(queue>0?ORANGE:MUTED);}
+              if(statusV!=null){statusV.setText(status);statusV.setTextColor("Серверге кірдім".equals(status)?GREEN:ORANGE);}
+              refreshReady();
+            }
+            String link(){return "almasoffical://join?room="+Uri.encode(room);}
+            void copy(){((ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("ALMAS room",link()));Toast.makeText(this,"Сілтеме көшірілді",Toast.LENGTH_SHORT).show();}
+            void share(){Intent i=new Intent(Intent.ACTION_SEND);i.setType("text/plain");i.putExtra(Intent.EXTRA_TEXT,"ALMAS OFFICAL • BLACK RUSSIA\nRoom: "+room+"\n"+link());startActivity(Intent.createChooser(i,"Бөлме сілтемесін жіберу"));}
+            void handle(Intent i){Uri d=i==null?null:i.getData();if(d!=null&&"almasoffical".equalsIgnoreCase(d.getScheme())&&"join".equalsIgnoreCase(d.getHost())){String x=d.getQueryParameter("room");if(x!=null&&!x.trim().isEmpty()){room=x.trim();prefs.edit().putString("room",room).apply();Toast.makeText(this,"Бөлмеге қосылдың: "+room,Toast.LENGTH_LONG).show();}}}
+            void saveQueue(){try{String x=queueInput.getText().toString().trim();queue=x.isEmpty()?0:Math.max(0,Integer.parseInt(x));}catch(Exception e){queue=0;}prefs.edit().putInt("queue",queue).apply();refresh();updateVoice();}
+            void setStatus(String x){status=x;if("Серверге кірдім".equals(x)){queue=0;queueInput.setText("");}prefs.edit().putString("status",status).putInt("queue",queue).apply();refresh();updateVoice();}
+          
+            boolean overlayOk(){return Build.VERSION.SDK_INT<23||Settings.canDrawOverlays(this);}
+            void overlayPermission(){if(overlayOk()){Toast.makeText(this,"Floating рұқсаты бар",Toast.LENGTH_SHORT).show();return;}startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));}
+            List<String> missing(){List<String> a=new ArrayList<>();if(Build.VERSION.SDK_INT>=23){if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED)a.add(Manifest.permission.RECORD_AUDIO);if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)a.add(Manifest.permission.POST_NOTIFICATIONS);}return a;}
+            void askPerms(){List<String>a=missing();if(a.isEmpty()){Toast.makeText(this,"Микрофон дайын",Toast.LENGTH_SHORT).show();return;}requestPermissions(a.toArray(new String[0]),REQ_PERMS);}
+            @Override public void onRequestPermissionsResult(int r,String[]p,int[]g){super.onRequestPermissionsResult(r,p,g);refreshReady();}
+            void refreshReady(){if(readyV==null)return;boolean m=missing().isEmpty(),o=overlayOk();readyV.setText((m?"✓ Микрофон":"• Микрофон керек")+"   "+(o?"✓ Floating":"• Floating керек"));readyV.setTextColor(m&&o?GREEN:ORANGE);if(start!=null)start.setAlpha(m&&o?1f:.72f);}
+          
+            void startVoice(boolean silent){if(!missing().isEmpty()){askPerms();return;}if(!overlayOk()){overlayPermission();return;}Intent i=new Intent(this,VoiceService.class);i.putExtra("room",room);i.putExtra("queue",queue);i.putExtra("status",status);svc(i);if(!silent)Toast.makeText(this,"Voice + floating panel қосылды",Toast.LENGTH_SHORT).show();}
+            void updateVoice(){if(!VoiceService.isRunning())return;Intent i=new Intent(this,VoiceService.class);i.setAction(VoiceService.ACTION_UPDATE);i.putExtra("room",room);i.putExtra("queue",queue);i.putExtra("status",status);svc(i);}
+            void capture(){MediaProjectionManager m=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);startActivityForResult(m.createScreenCaptureIntent(),REQ_CAPTURE);}
+            @Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==REQ_CAPTURE&&c==RESULT_OK&&d!=null){Intent i=new Intent(this,ScreenShareService.class);i.putExtra("resultCode",c);i.putExtra("resultData",d);i.putExtra("room",room);svc(i);}}
+            void svc(Intent i){if(Build.VERSION.SDK_INT>=26)startForegroundService(i);else startService(i);}
+            void launch(){if(!missing().isEmpty()){askPerms();return;}if(!overlayOk()){overlayPermission();return;}startVoice(true);Intent i=getPackageManager().getLaunchIntentForPackage(GAME);if(i!=null){i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(i);}else{try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("market://details?id="+GAME)));}catch(Exception e){startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://play.google.com/store/apps/details?id="+GAME)));}}}
+          
+            LinearLayout col(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
+            LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.HORIZONTAL);l.setGravity(Gravity.CENTER_VERTICAL);return l;}
+            LinearLayout card(int c){LinearLayout l=col();l.setPadding(dp(16),dp(16),dp(16),dp(16));l.setBackground(round(c,20));return l;}
+            TextView sec(String s){TextView t=txt(s,11,Color.rgb(173,157,255),true);t.setLetterSpacing(.07f);return t;}
+            TextView txt(String s,int z,int c,boolean b){TextView t=new TextView(this);t.setText(s);t.setTextSize(z);t.setTextColor(c);if(b)t.setTypeface(Typeface.DEFAULT_BOLD);return t;}
+            Button btn(String s,int c){Button b=new Button(this);b.setText(s);b.setTextColor(Color.WHITE);b.setTextSize(14);b.setAllCaps(false);b.setTypeface(Typeface.DEFAULT_BOLD);b.setBackground(round(c,16));return b;}
+            GradientDrawable round(int c,int r){GradientDrawable g=new GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;}
+            View gap(int h){View v=new View(this);v.setLayoutParams(new LinearLayout.LayoutParams(1,dp(h)));return v;} View gapH(int w){View v=new View(this);v.setLayoutParams(new LinearLayout.LayoutParams(dp(w),1));return v;}
+            LinearLayout.LayoutParams weight(){return new LinearLayout.LayoutParams(0,dp(52),1);} int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
+          }
+          
+          JAVA
+          cat > Almas_Official_BR_Android/app/src/main/java/kz/almasofficial/br/VoiceService.java <<'JAVA'
+          package kz.almasofficial.br;
+          
+          import android.app.*;
+          import android.content.*;
+          import android.graphics.*;
+          import android.graphics.drawable.GradientDrawable;
+          import android.media.*;
+          import android.os.*;
+          import android.provider.Settings;
+          import android.view.*;
+          import android.widget.*;
+          
+          public class VoiceService extends Service {
+            public static final String ACTION_UPDATE="kz.almasofficial.br.UPDATE_OVERLAY";
+            static final String CH="almas_voice"; static volatile boolean active=false;
+            volatile boolean recording; AudioRecord rec; WindowManager wm; View overlay; WindowManager.LayoutParams p;
+            TextView roomV,queueV,statusV; String room="ASTANA",status="Кезектемін"; int queue=0;
+            public static boolean isRunning(){return active;}
+          
+            @Override public void onCreate(){super.onCreate();active=true;if(Build.VERSION.SDK_INT>=26){NotificationManager n=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);n.createNotificationChannel(new NotificationChannel(CH,"ALMAS Voice",NotificationManager.IMPORTANCE_LOW));}}
+            @Override public int onStartCommand(Intent i,int f,int id){
+              if(i!=null){String x=i.getStringExtra("room");if(x!=null&&!x.isEmpty())room=x;queue=i.getIntExtra("queue",queue);x=i.getStringExtra("status");if(x!=null)status=x;}
+              startForeground(41,note()); ensureOverlay(); updateOverlay(); if(i==null||!ACTION_UPDATE.equals(i.getAction()))capture(); return START_STICKY;
+            }
+            Notification note(){
+              Notification.Builder b=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,CH):new Notification.Builder(this).setPriority(Notification.PRIORITY_LOW);
+              Intent o=new Intent(this,MainActivity.class);o.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+              int flags=PendingIntent.FLAG_UPDATE_CURRENT|(Build.VERSION.SDK_INT>=23?PendingIntent.FLAG_IMMUTABLE:0);
+              PendingIntent pi=PendingIntent.getActivity(this,11,o,flags);
+              return b.setContentTitle("ALMAS OFFICAL • Voice active").setContentText(room+" • "+(queue>0?"Очередь: "+queue:status)).setSmallIcon(android.R.drawable.ic_btn_speak_now).setContentIntent(pi).setOngoing(true).build();
+            }
+            void ensureOverlay(){
+              if(overlay!=null)return;if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this))return;
+              wm=(WindowManager)getSystemService(WINDOW_SERVICE);int type=Build.VERSION.SDK_INT>=26?WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY:WindowManager.LayoutParams.TYPE_PHONE;
+              p=new WindowManager.LayoutParams(dp(235),-2,type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,PixelFormat.TRANSLUCENT);p.gravity=Gravity.TOP|Gravity.END;p.x=dp(8);p.y=dp(90);
+              LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(dp(11),dp(10),dp(11),dp(10));GradientDrawable bg=new GradientDrawable();bg.setColor(Color.argb(238,15,18,28));bg.setCornerRadius(dp(18));bg.setStroke(dp(1),Color.argb(180,124,92,255));box.setBackground(bg);
+              LinearLayout top=row();TextView face=t("A",17,Color.WHITE,true);face.setGravity(Gravity.CENTER);GradientDrawable fb=new GradientDrawable();fb.setColor(Color.rgb(124,92,255));fb.setCornerRadius(dp(999));face.setBackground(fb);top.addView(face,new LinearLayout.LayoutParams(dp(38),dp(38)));
+              LinearLayout info=new LinearLayout(this);info.setOrientation(LinearLayout.VERTICAL);info.setPadding(dp(9),0,0,0);roomV=t(room,13,Color.WHITE,true);TextView on=t("● 1 online • mic ON",11,Color.rgb(57,217,154),false);info.addView(roomV);info.addView(on);top.addView(info,new LinearLayout.LayoutParams(0,dp(40),1));
+              TextView close=t("×",24,Color.rgb(190,198,220),true);close.setGravity(Gravity.CENTER);close.setOnClickListener(v->stopSelf());top.addView(close,new LinearLayout.LayoutParams(dp(30),dp(38)));box.addView(top);
+              View line=new View(this);line.setBackgroundColor(Color.argb(90,124,92,255));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(1));lp.setMargins(0,dp(8),0,dp(8));box.addView(line,lp);
+              queueV=t("Очередь: —",16,Color.rgb(255,183,77),true);statusV=t(status,11,Color.rgb(160,169,190),false);box.addView(queueV);box.addView(statusV);overlay=box;drag(box);try{wm.addView(overlay,p);}catch(Exception e){overlay=null;}
+            }
+            void drag(View v){v.setOnTouchListener(new View.OnTouchListener(){int sx,sy;float dx,dy;boolean moved;public boolean onTouch(View x,MotionEvent e){switch(e.getAction()){case MotionEvent.ACTION_DOWN:sx=p.x;sy=p.y;dx=e.getRawX();dy=e.getRawY();moved=false;return true;case MotionEvent.ACTION_MOVE:int a=(int)(e.getRawX()-dx),b=(int)(e.getRawY()-dy);if(Math.abs(a)>5||Math.abs(b)>5)moved=true;p.x=Math.max(0,sx-a);p.y=Math.max(0,sy+b);try{wm.updateViewLayout(overlay,p);}catch(Exception z){}return true;case MotionEvent.ACTION_UP:if(!moved)open();return true;}return false;}});}
+            void open(){Intent i=new Intent(this,MainActivity.class);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);try{startActivity(i);}catch(Exception e){}}
+            void updateOverlay(){if(roomV!=null)roomV.setText(room);if(queueV!=null){queueV.setText(queue>0?"Очередь: "+queue:"Очередь: —");queueV.setTextColor(queue>0?Color.rgb(255,183,77):Color.rgb(153,162,184));}if(statusV!=null){statusV.setText(status+" • ALMAS OFFICAL");statusV.setTextColor("Серверге кірдім".equals(status)?Color.rgb(57,217,154):Color.rgb(160,169,190));}((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(41,note());}
+            void capture(){if(recording)return;recording=true;new Thread(()->{try{int sr=48000,min=AudioRecord.getMinBufferSize(sr,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT);rec=new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION,sr,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,Math.max(min*2,8192));byte[]buf=new byte[4096];rec.startRecording();while(recording){rec.read(buf,0,buf.length);}}catch(Exception e){}finally{try{if(rec!=null)rec.release();}catch(Exception e){}}},"almas-voice").start();}
+            @Override public void onDestroy(){active=false;recording=false;try{if(rec!=null)rec.stop();}catch(Exception e){}if(wm!=null&&overlay!=null)try{wm.removeView(overlay);}catch(Exception e){}overlay=null;super.onDestroy();}
+            LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.HORIZONTAL);l.setGravity(Gravity.CENTER_VERTICAL);return l;}TextView t(String s,int z,int c,boolean b){TextView v=new TextView(this);v.setText(s);v.setTextSize(z);v.setTextColor(c);if(b)v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);return v;}int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
+            @Override public IBinder onBind(Intent i){return null;}
+          }
+          
+          JAVA
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Almas_Official_BR_Android/app/src/main/AndroidManifest.xml')
+          s=p.read_text()
+          if 'android.permission.SYSTEM_ALERT_WINDOW' not in s:
+              s=s.replace('<uses-permission android:name="android.permission.INTERNET" />','<uses-permission android:name="android.permission.INTERNET" />\\n    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />')
+          s=s.replace('android:label="ALMAS OFFICAL Universal"','android:label="ALMAS OFFICAL BR"')
+          p.write_text(s)
+          p=Path('Almas_Official_BR_Android/app/build.gradle')
+          s=p.read_text().replace("versionCode 2","versionCode 3").replace("versionName '0.2.0-universal'","versionName '0.3.0-floating'")
+          p.write_text(s)
+          PY
+
+      - name: Apply v0.4 nickname live-screen
+        shell: bash
+        run: |
+          cat > Almas_Official_BR_Android/app/src/main/java/kz/almasofficial/br/MainActivity.java <<'JAVA'
+          package kz.almasofficial.br;
+          
+          import android.Manifest;
+          import android.app.*;
+          import android.content.*;
+          import android.content.pm.PackageManager;
+          import android.graphics.*;
+          import android.graphics.drawable.GradientDrawable;
+          import android.media.projection.MediaProjectionManager;
+          import android.net.Uri;
+          import android.os.*;
+          import android.provider.Settings;
+          import android.view.*;
+          import android.widget.*;
+          import java.util.*;
+          
+          public class MainActivity extends Activity {
+              static final int REQ_PERMS=2001, REQ_CAPTURE=2002;
+              static final String GAME="com.launcher.brgame", PREFS="almas_br";
+              static final String PAGE="https://jjjjjjjjjjjjjjae-hub.github.io/Chatgpt-Almas-/";
+              final int BG=Color.rgb(7,9,15), CARD=Color.rgb(18,22,34), CARD2=Color.rgb(25,30,45);
+              final int PURPLE=Color.rgb(124,92,255), GREEN=Color.rgb(57,217,154), MUTED=Color.rgb(153,162,184);
+              SharedPreferences prefs; String room,nick,selected="";
+              TextView nickV,roomV,linkV,onlineV,selectedV,readyV; EditText search; LinearLayout players;
+              Handler refreshHandler=new Handler(Looper.getMainLooper());
+          
+              @Override public void onCreate(Bundle b){
+                  super.onCreate(b); prefs=getSharedPreferences(PREFS,MODE_PRIVATE);
+                  room=prefs.getString("room","AST-"+UUID.randomUUID().toString().replace("-","").substring(0,8).toUpperCase(Locale.US));
+                  nick=prefs.getString("nick",""); selected=prefs.getString("selected",""); handle(getIntent());
+                  setContentView(ui()); refresh(); refreshHandler.postDelayed(tick,1000);
+                  if(nick.trim().isEmpty()) new Handler().postDelayed(()->nickDialog(true),200);
+              }
+              final Runnable tick=new Runnable(){public void run(){refreshPlayers();refreshHandler.postDelayed(this,2000);}};
+              @Override protected void onDestroy(){refreshHandler.removeCallbacksAndMessages(null);super.onDestroy();}
+              @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);handle(i);refresh();}
+              @Override protected void onResume(){super.onResume();refreshReady();refreshPlayers();}
+          
+              View ui(){
+                  ScrollView sv=new ScrollView(this); sv.setFillViewport(true); sv.setBackgroundColor(BG);
+                  LinearLayout root=col(); root.setPadding(dp(16),dp(18),dp(16),dp(34)); sv.addView(root);
+                  LinearLayout hero=card(PURPLE); hero.addView(txt("ALMAS OFFICAL",28,Color.WHITE,true)); hero.addView(txt("BLACK RUSSIA • LIVE COMPANION",12,Color.WHITE,true)); hero.addView(gap(7)); hero.addView(txt("NICK • LIVE PLAYERS • MINI SCREEN • GITHUB.IO",12,Color.WHITE,false)); root.addView(hero);
+          
+                  root.addView(gap(14)); LinearLayout profile=card(CARD); profile.addView(sec("ПРОФИЛЬ / NICKNAME"));
+                  LinearLayout pr=row(); TextView av=txt("A",20,Color.WHITE,true);av.setGravity(Gravity.CENTER);av.setBackground(round(PURPLE,999));pr.addView(av,new LinearLayout.LayoutParams(dp(50),dp(50)));pr.addView(gapH(10));
+                  nickV=txt("",18,Color.WHITE,true);pr.addView(nickV,new LinearLayout.LayoutParams(0,dp(50),1));Button rename=btn("Никті өзгерту",CARD2);rename.setOnClickListener(v->nickDialog(false));pr.addView(rename,new LinearLayout.LayoutParams(dp(132),dp(48)));profile.addView(pr);root.addView(profile);
+          
+                  root.addView(gap(14)); LinearLayout rc=card(CARD);rc.addView(sec("ҚОСЫЛУ СІЛТЕМЕСІ"));roomV=txt("",20,Color.WHITE,true);linkV=txt("",11,MUTED,false);linkV.setTextIsSelectable(true);rc.addView(roomV);rc.addView(gap(6));rc.addView(linkV);rc.addView(gap(10));
+                  LinearLayout rr=row();Button share=btn("Бөлісу",PURPLE),web=btn("GitHub.io ашу",CARD2);share.setOnClickListener(v->share());web.setOnClickListener(v->openWeb());rr.addView(share,weight());rr.addView(gapH(8));rr.addView(web,weight());rc.addView(rr);root.addView(rc);
+          
+                  root.addView(gap(14)); LinearLayout pc=card(CARD);LinearLayout ph=row();ph.addView(sec("ОНЛАЙН ОЙЫНШЫЛАР"),new LinearLayout.LayoutParams(0,-2,1));onlineV=txt("0 online",12,GREEN,true);ph.addView(onlineV);pc.addView(ph);pc.addView(gap(8));players=col();pc.addView(players);root.addView(pc);
+          
+                  root.addView(gap(14)); LinearLayout sc=card(CARD);sc.addView(sec("НИК БОЙЫНША ІЗДЕУ / ЭКРАН КӨРУ"));search=new EditText(this);search.setSingleLine();search.setTextColor(Color.WHITE);search.setHintTextColor(MUTED);search.setHint("Ойыншы никі");search.setBackground(round(CARD2,14));search.setPadding(dp(14),0,dp(14),0);sc.addView(search,new LinearLayout.LayoutParams(-1,dp(52)));sc.addView(gap(8));
+                  Button watch=btn("Іздеу және экранды көру",PURPLE);watch.setOnClickListener(v->watch(search.getText().toString()));sc.addView(watch);sc.addView(gap(8));selectedV=txt("",12,MUTED,false);sc.addView(selectedV);root.addView(sc);
+          
+                  root.addView(gap(14)); LinearLayout live=card(CARD);live.addView(sec("LIVE MINI SCREEN"));FrameLayout fake=new FrameLayout(this);fake.setBackground(round(Color.rgb(4,6,10),18));TextView pv=txt("REMOTE SCREEN\nтаңдаған никтің экраны floating терезеде көрінеді",13,Color.rgb(180,189,210),true);pv.setGravity(Gravity.CENTER);fake.addView(pv,new FrameLayout.LayoutParams(-1,-1));live.addView(fake,new LinearLayout.LayoutParams(-1,dp(150)));live.addView(gap(9));live.addView(txt("Панельді экран шетіне сырғытсаң — жасырылады. «Көрсету» tab қалады.",11,MUTED,false));root.addView(live);
+          
+                  root.addView(gap(14));LinearLayout fc=card(CARD);fc.addView(sec("РҰҚСАТ / ҚОСЫЛУ"));readyV=txt("",13,Color.WHITE,true);fc.addView(readyV);fc.addView(gap(8));Button overlay=btn("Floating рұқсаты",CARD2),perm=btn("Микрофон рұқсаты",CARD2),connect=btn("● Бөлмеге қосылу",PURPLE);overlay.setOnClickListener(v->overlayPermission());perm.setOnClickListener(v->askPerms());connect.setOnClickListener(v->connect());fc.addView(overlay);fc.addView(gap(7));fc.addView(perm);fc.addView(gap(7));fc.addView(connect);root.addView(fc);
+          
+                  root.addView(gap(14));LinearLayout ss=card(CARD);ss.addView(sec("МЕНІҢ ЭКРАНЫМ"));Button startShare=btn("▣ Экран бөлісуді бастау",PURPLE);startShare.setOnClickListener(v->capture());ss.addView(startShare);ss.addView(gap(7));ss.addView(txt("Mini-preview 854×480 realtime JPEG. Бұл v0.4 тест ағыны; кейін 1080p WebRTC-ке ауыстырамыз.",11,MUTED,false));root.addView(ss);
+          
+                  root.addView(gap(18));Button start=btn("START • BLACK RUSSIA",PURPLE);start.setTextSize(18);start.setMinHeight(dp(64));start.setOnClickListener(v->launch());root.addView(start);
+                  return sv;
+              }
+          
+              void nickDialog(boolean required){
+                  final EditText e=new EditText(this);e.setSingleLine();e.setHint("Мысалы: Almas_01");e.setText(nick);e.setSelectAllOnFocus(true);e.setPadding(dp(14),0,dp(14),0);
+                  AlertDialog d=new AlertDialog.Builder(this).setTitle("Nickname").setMessage("Басқа ойыншылар сені осы никпен табады.").setView(e).setPositiveButton("Сақтау",null).setNegativeButton(required?"":"Бас тарту",null).create();
+                  d.setOnShowListener(x->d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{String n=e.getText().toString().trim();if(n.length()<2){e.setError("Кемінде 2 таңба");return;}nick=n.substring(0,Math.min(24,n.length()));prefs.edit().putString("nick",nick).apply();refresh();VoiceService.updateIdentity(this,room,nick);d.dismiss();}));
+                  d.setCanceledOnTouchOutside(!required);d.show();
+              }
+              void refresh(){if(nickV!=null)nickV.setText(nick.isEmpty()?"Nickname керек":nick);if(roomV!=null)roomV.setText(room);if(linkV!=null)linkV.setText(link());if(selectedV!=null)selectedV.setText(selected.isEmpty()?"Экран таңдалмаған":"Көріп тұрсың: "+selected);refreshReady();refreshPlayers();}
+              String link(){return PAGE+"?room="+Uri.encode(room);}
+              void share(){Intent i=new Intent(Intent.ACTION_SEND);i.setType("text/plain");i.putExtra(Intent.EXTRA_TEXT,"ALMAS OFFICAL • "+room+"\n"+link());startActivity(Intent.createChooser(i,"Қосылу сілтемесі"));}
+              void openWeb(){startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(link())));}
+              void handle(Intent i){Uri d=i==null?null:i.getData();if(d==null)return;String r=d.getQueryParameter("room");if(r!=null&&!r.trim().isEmpty()){room=r.trim().substring(0,Math.min(40,r.trim().length()));prefs.edit().putString("room",room).apply();}}
+              void watch(String n){n=n.trim();if(n.isEmpty()){Toast.makeText(this,"Ник енгіз",Toast.LENGTH_SHORT).show();return;}selected=n.substring(0,Math.min(24,n.length()));prefs.edit().putString("selected",selected).apply();VoiceService.watch(this,room,nick,selected);refresh();Toast.makeText(this,selected+" экраны таңдалды",Toast.LENGTH_SHORT).show();}
+              void refreshPlayers(){if(players==null)return;List<String> list=VoiceService.onlinePlayers();players.removeAllViews();int count=0;for(String p:list){if(System.currentTimeMillis()-VoiceService.lastSeen(p)>16000)continue;count++;LinearLayout row=row();TextView n=txt(p,15,Color.WHITE,true);row.addView(n,new LinearLayout.LayoutParams(0,dp(44),1));Button w=btn("Көру",CARD2);final String target=p;w.setOnClickListener(v->watch(target));row.addView(w,new LinearLayout.LayoutParams(dp(90),dp(42)));players.addView(row);players.addView(gap(5));}if(count==0)players.addView(txt(VoiceService.isRunning()?"Әзірге басқа ойыншы жоқ":"Алдымен «Бөлмеге қосылу» бас",12,MUTED,false));if(onlineV!=null)onlineV.setText(count+" online");}
+          
+              boolean overlayOk(){return Build.VERSION.SDK_INT<23||Settings.canDrawOverlays(this);}void overlayPermission(){if(overlayOk()){Toast.makeText(this,"Floating рұқсаты бар",Toast.LENGTH_SHORT).show();return;}startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));}
+              List<String> missing(){List<String>a=new ArrayList<>();if(Build.VERSION.SDK_INT>=23){if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED)a.add(Manifest.permission.RECORD_AUDIO);if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)a.add(Manifest.permission.POST_NOTIFICATIONS);}return a;}
+              void askPerms(){List<String>a=missing();if(a.isEmpty()){refreshReady();return;}requestPermissions(a.toArray(new String[0]),REQ_PERMS);}@Override public void onRequestPermissionsResult(int r,String[]p,int[]g){super.onRequestPermissionsResult(r,p,g);refreshReady();}
+              void refreshReady(){if(readyV==null)return;boolean m=missing().isEmpty(),o=overlayOk();readyV.setText((m?"✓ Mic":"• Mic керек")+"   "+(o?"✓ Floating":"• Floating керек")+"   "+(VoiceService.isRunning()?"✓ Online":"• Offline"));readyV.setTextColor(m&&o?GREEN:Color.rgb(255,183,77));}
+              void connect(){if(nick.isEmpty()){nickDialog(true);return;}if(!missing().isEmpty()){askPerms();return;}if(!overlayOk()){overlayPermission();return;}VoiceService.connect(this,room,nick,selected);new Handler().postDelayed(()->{refreshReady();refreshPlayers();},800);}
+              void capture(){if(nick.isEmpty()){nickDialog(true);return;}connect();MediaProjectionManager m=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);startActivityForResult(m.createScreenCaptureIntent(),REQ_CAPTURE);}
+              @Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==REQ_CAPTURE&&c==RESULT_OK&&d!=null){Intent i=new Intent(this,ScreenShareService.class);i.putExtra("resultCode",c);i.putExtra("resultData",d);i.putExtra("room",room);i.putExtra("nick",nick);svc(i);Toast.makeText(this,"Экран бөлісу қосылды",Toast.LENGTH_SHORT).show();}}
+              void launch(){if(nick.isEmpty()){nickDialog(true);return;}if(!missing().isEmpty()){askPerms();return;}if(!overlayOk()){overlayPermission();return;}connect();Intent i=getPackageManager().getLaunchIntentForPackage(GAME);if(i!=null){i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(i);}else{try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("market://details?id="+GAME)));}catch(Exception e){startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://play.google.com/store/apps/details?id="+GAME)));}}}
+              void svc(Intent i){if(Build.VERSION.SDK_INT>=26)startForegroundService(i);else startService(i);}
+          
+              LinearLayout col(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.HORIZONTAL);l.setGravity(Gravity.CENTER_VERTICAL);return l;}LinearLayout card(int c){LinearLayout l=col();l.setPadding(dp(16),dp(16),dp(16),dp(16));l.setBackground(round(c,20));return l;}TextView sec(String s){TextView t=txt(s,11,Color.rgb(180,165,255),true);t.setLetterSpacing(.06f);return t;}TextView txt(String s,int z,int c,boolean b){TextView t=new TextView(this);t.setText(s);t.setTextSize(z);t.setTextColor(c);if(b)t.setTypeface(Typeface.DEFAULT_BOLD);return t;}Button btn(String s,int c){Button b=new Button(this);b.setText(s);b.setTextColor(Color.WHITE);b.setTextSize(13);b.setAllCaps(false);b.setTypeface(Typeface.DEFAULT_BOLD);b.setBackground(round(c,15));return b;}GradientDrawable round(int c,int r){GradientDrawable g=new GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;}View gap(int h){View v=new View(this);v.setLayoutParams(new LinearLayout.LayoutParams(1,dp(h)));return v;}View gapH(int w){View v=new View(this);v.setLayoutParams(new LinearLayout.LayoutParams(dp(w),1));return v;}LinearLayout.LayoutParams weight(){return new LinearLayout.LayoutParams(0,dp(52),1);}int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
+          }
+          JAVA
+          cat > Almas_Official_BR_Android/app/src/main/java/kz/almasofficial/br/VoiceService.java <<'JAVA'
+          package kz.almasofficial.br;
+          
+          import android.app.*;
+          import android.content.*;
+          import android.graphics.*;
+          import android.graphics.drawable.GradientDrawable;
+          import android.media.*;
+          import android.os.*;
+          import android.provider.Settings;
+          import android.view.*;
+          import android.widget.*;
+          import org.eclipse.paho.client.mqttv3.*;
+          import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+          import java.nio.charset.StandardCharsets;
+          import java.util.*;
+          import java.util.concurrent.ConcurrentHashMap;
+          
+          public class VoiceService extends Service {
+              public static final String ACTION_WATCH="kz.almasofficial.br.WATCH", ACTION_IDENTITY="kz.almasofficial.br.IDENTITY";
+              static final String BROKER="ssl://broker.emqx.io:8883", ROOT="almasbr/v04"; static volatile boolean running=false;
+              static final ConcurrentHashMap<String,Long> SEEN=new ConcurrentHashMap<>(); static final ConcurrentHashMap<String,String> KEY_NAME=new ConcurrentHashMap<>();
+              MqttClient mqtt; String room="",nick="",selected="",roomKey=""; Handler main=new Handler(Looper.getMainLooper()); HandlerThread workerThread; Handler worker; Runnable heartbeat;
+              WindowManager wm; View panelView,tabView; WindowManager.LayoutParams panelParams,tabParams; ImageView remoteImage; TextView titleView,onlineView,stateView;
+              volatile boolean recording=false; AudioRecord rec;
+          
+              public static boolean isRunning(){return running;} public static long lastSeen(String n){Long x=SEEN.get(n);return x==null?0:x;}
+              public static List<String> onlinePlayers(){ArrayList<String>a=new ArrayList<>();long now=System.currentTimeMillis();for(Map.Entry<String,Long>e:SEEN.entrySet())if(now-e.getValue()<16000)a.add(e.getKey());Collections.sort(a,String.CASE_INSENSITIVE_ORDER);return a;}
+              public static void connect(Context c,String room,String nick,String selected){Intent i=new Intent(c,VoiceService.class);i.putExtra("room",room);i.putExtra("nick",nick);i.putExtra("target",selected);start(c,i);}
+              public static void watch(Context c,String room,String nick,String target){Intent i=new Intent(c,VoiceService.class);i.setAction(ACTION_WATCH);i.putExtra("room",room);i.putExtra("nick",nick);i.putExtra("target",target);start(c,i);}
+              public static void updateIdentity(Context c,String room,String nick){if(!running)return;Intent i=new Intent(c,VoiceService.class);i.setAction(ACTION_IDENTITY);i.putExtra("room",room);i.putExtra("nick",nick);start(c,i);}
+              static void start(Context c,Intent i){if(Build.VERSION.SDK_INT>=26)c.startForegroundService(i);else c.startService(i);}
+          
+              @Override public void onCreate(){super.onCreate();running=true;workerThread=new HandlerThread("almas-realtime");workerThread.start();worker=new Handler(workerThread.getLooper());if(Build.VERSION.SDK_INT>=26){NotificationManager n=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);n.createNotificationChannel(new NotificationChannel("almas_live","ALMAS Live",NotificationManager.IMPORTANCE_LOW));}}
+              @Override public int onStartCommand(Intent i,int flags,int id){startForeground(41,note());String oldRoom=room,oldNick=nick;if(i!=null){String x=i.getStringExtra("room");if(x!=null&&!x.trim().isEmpty())room=x.trim();x=i.getStringExtra("nick");if(x!=null&&!x.trim().isEmpty())nick=x.trim();x=i.getStringExtra("target");if(x!=null)selected=x.trim();}ensureOverlay();updateOverlay();boolean changed=!oldRoom.equals(room)||!oldNick.equals(nick);if(mqtt==null||!mqtt.isConnected()||changed)worker.post(()->reconnect());else if(i!=null&&ACTION_WATCH.equals(i.getAction()))worker.post(()->subscribeScreen(selected));startVoiceCapture();return START_STICKY;}
+              Notification note(){Notification.Builder b=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,"almas_live"):new Notification.Builder(this).setPriority(Notification.PRIORITY_LOW);Intent open=new Intent(this,MainActivity.class);open.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);int fl=PendingIntent.FLAG_UPDATE_CURRENT|(Build.VERSION.SDK_INT>=23?PendingIntent.FLAG_IMMUTABLE:0);PendingIntent pi=PendingIntent.getActivity(this,9,open,fl);return b.setContentTitle("ALMAS OFFICAL • "+(nick.isEmpty()?"Live":nick)).setContentText(selected.isEmpty()?"Бөлме: "+room:"Көріп тұрсың: "+selected).setSmallIcon(android.R.drawable.presence_video_online).setContentIntent(pi).setOngoing(true).build();}
+          
+              void reconnect(){disconnectMqtt(false);if(room.isEmpty()||nick.isEmpty())return;roomKey=topicSafe(room);try{mqtt=new MqttClient(BROKER,"almas-"+UUID.randomUUID().toString().replace("-","").substring(0,18),new MemoryPersistence());mqtt.setCallback(new MqttCallbackExtended(){public void connectComplete(boolean reconnect,String serverURI){subscribeBase();}public void connectionLost(Throwable cause){}public void deliveryComplete(IMqttDeliveryToken t){}public void messageArrived(String topic,MqttMessage msg){handleMessage(topic,msg);}});MqttConnectOptions o=new MqttConnectOptions();o.setCleanSession(true);o.setAutomaticReconnect(true);o.setConnectionTimeout(8);o.setKeepAliveInterval(15);mqtt.connect(o);subscribeBase();scheduleHeartbeat();}catch(Exception e){main.post(()->{if(stateView!=null)stateView.setText("Realtime connection error");});}}
+              void subscribeBase(){try{if(mqtt==null||!mqtt.isConnected())return;mqtt.subscribe(ROOT+"/"+roomKey+"/presence/+",0);subscribeScreen(selected);publishPresence();}catch(Exception ignored){}}
+              void subscribeScreen(String target){try{if(mqtt==null||!mqtt.isConnected())return;try{mqtt.unsubscribe(ROOT+"/"+roomKey+"/screen/#");}catch(Exception ignored){}if(target!=null&&!target.trim().isEmpty())mqtt.subscribe(ROOT+"/"+roomKey+"/screen/"+topicSafe(target),0);}catch(Exception ignored){}main.post(this::updateOverlay);}
+              void scheduleHeartbeat(){if(heartbeat!=null)worker.removeCallbacks(heartbeat);heartbeat=new Runnable(){public void run(){publishPresence();if(worker!=null)worker.postDelayed(this,5000);}};worker.post(heartbeat);}
+              void publishPresence(){try{if(mqtt==null||!mqtt.isConnected()||nick.isEmpty())return;long ts=System.currentTimeMillis();String payload=nick+"|"+ts;MqttMessage m=new MqttMessage(payload.getBytes(StandardCharsets.UTF_8));m.setQos(0);m.setRetained(true);mqtt.publish(ROOT+"/"+roomKey+"/presence/"+topicSafe(nick),m);SEEN.put(nick,ts);KEY_NAME.put(topicSafe(nick),nick);main.post(this::updateOverlay);}catch(Exception ignored){}}
+              void handleMessage(String topic,MqttMessage msg){if(topic.contains("/presence/")){String k=topic.substring(topic.lastIndexOf('/')+1);String s=new String(msg.getPayload(),StandardCharsets.UTF_8);if(s.isEmpty()){String n=KEY_NAME.remove(k);if(n!=null)SEEN.remove(n);return;}String[]p=s.split("\\|",2);if(p.length==2){try{long ts=Long.parseLong(p[1]);SEEN.put(p[0],ts);KEY_NAME.put(k,p[0]);}catch(Exception ignored){}}main.post(this::updateOverlay);return;}if(topic.contains("/screen/")&&msg.getPayload()!=null&&msg.getPayload().length>100){byte[]data=msg.getPayload();Bitmap bm=BitmapFactory.decodeByteArray(data,0,data.length);if(bm!=null)main.post(()->{if(remoteImage!=null){remoteImage.setImageBitmap(bm);if(stateView!=null)stateView.setText((selected.isEmpty()?"Remote":selected)+" • LIVE");}});}}
+          
+              void ensureOverlay(){if(panelView!=null||(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)))return;wm=(WindowManager)getSystemService(WINDOW_SERVICE);buildPanel();showPanel();}
+              void buildPanel(){LinearLayout box=col();box.setPadding(dp(10),dp(9),dp(10),dp(10));GradientDrawable bg=new GradientDrawable();bg.setColor(Color.argb(242,11,14,23));bg.setCornerRadius(dp(18));bg.setStroke(dp(1),Color.rgb(124,92,255));box.setBackground(bg);LinearLayout head=row();TextView face=t(nick.isEmpty()?"A":nick.substring(0,1).toUpperCase(),16,Color.WHITE,true);face.setGravity(Gravity.CENTER);GradientDrawable fb=new GradientDrawable();fb.setColor(Color.rgb(124,92,255));fb.setCornerRadius(dp(999));face.setBackground(fb);head.addView(face,new LinearLayout.LayoutParams(dp(36),dp(36)));LinearLayout info=col();info.setPadding(dp(8),0,0,0);titleView=t(nick.isEmpty()?"ALMAS":nick,13,Color.WHITE,true);onlineView=t("● realtime",10,Color.rgb(57,217,154),false);info.addView(titleView);info.addView(onlineView);head.addView(info,new LinearLayout.LayoutParams(0,dp(38),1));Button hide=b("Жасыру",Color.rgb(35,40,56));hide.setOnClickListener(v->hidePanel(nearestSide()));head.addView(hide,new LinearLayout.LayoutParams(dp(86),dp(38)));box.addView(head);head.setOnTouchListener(dragListener());remoteImage=new ImageView(this);remoteImage.setScaleType(ImageView.ScaleType.FIT_CENTER);remoteImage.setBackgroundColor(Color.rgb(3,5,9));LinearLayout.LayoutParams ip=new LinearLayout.LayoutParams(-1,dp(145));ip.topMargin=dp(8);box.addView(remoteImage,ip);stateView=t("Экран таңда: қолданбадағы никті бас",11,Color.rgb(163,171,193),false);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.topMargin=dp(7);box.addView(stateView,sp);panelView=box;int type=Build.VERSION.SDK_INT>=26?WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY:WindowManager.LayoutParams.TYPE_PHONE;panelParams=new WindowManager.LayoutParams(dp(285),-2,type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,PixelFormat.TRANSLUCENT);panelParams.gravity=Gravity.TOP|Gravity.START;panelParams.x=dp(12);panelParams.y=dp(92);}
+              View.OnTouchListener dragListener(){return new View.OnTouchListener(){int sx,sy;float rx,ry;public boolean onTouch(View v,MotionEvent e){switch(e.getAction()){case MotionEvent.ACTION_DOWN:sx=panelParams.x;sy=panelParams.y;rx=e.getRawX();ry=e.getRawY();return true;case MotionEvent.ACTION_MOVE:panelParams.x=Math.max(0,sx+(int)(e.getRawX()-rx));panelParams.y=Math.max(0,sy+(int)(e.getRawY()-ry));try{wm.updateViewLayout(panelView,panelParams);}catch(Exception ignored){}return true;case MotionEvent.ACTION_UP:if(edgeReached())hidePanel(nearestSide());return true;}return false;}};}
+              boolean edgeReached(){int sw=getResources().getDisplayMetrics().widthPixels;return panelParams.x<dp(24)||panelParams.x+dp(285)>sw-dp(24);}int nearestSide(){int sw=getResources().getDisplayMetrics().widthPixels;return panelParams.x+dp(142)<sw/2?0:1;}
+              void hidePanel(int side){if(wm==null||panelView==null)return;try{wm.removeView(panelView);}catch(Exception ignored){}if(tabView==null){TextView tab=t("Көрсету",11,Color.WHITE,true);tab.setGravity(Gravity.CENTER);GradientDrawable g=new GradientDrawable();g.setColor(Color.argb(245,124,92,255));g.setCornerRadius(dp(14));tab.setBackground(g);tabView=tab;}int type=Build.VERSION.SDK_INT>=26?WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY:WindowManager.LayoutParams.TYPE_PHONE;tabParams=new WindowManager.LayoutParams(dp(68),dp(48),type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,PixelFormat.TRANSLUCENT);tabParams.gravity=Gravity.TOP|Gravity.START;tabParams.x=side==0?0:Math.max(0,getResources().getDisplayMetrics().widthPixels-dp(68));tabParams.y=panelParams.y;tabView.setOnTouchListener(new View.OnTouchListener(){float sy;int py;boolean moved;public boolean onTouch(View v,MotionEvent e){if(e.getAction()==MotionEvent.ACTION_DOWN){sy=e.getRawY();py=tabParams.y;moved=false;return true;}if(e.getAction()==MotionEvent.ACTION_MOVE){int dy=(int)(e.getRawY()-sy);if(Math.abs(dy)>5)moved=true;tabParams.y=Math.max(0,py+dy);try{wm.updateViewLayout(tabView,tabParams);}catch(Exception ignored){}return true;}if(e.getAction()==MotionEvent.ACTION_UP){if(!moved)showPanel();return true;}return false;}});try{wm.addView(tabView,tabParams);}catch(Exception ignored){}}
+              void showPanel(){if(wm==null||panelView==null)return;if(tabView!=null)try{wm.removeView(tabView);}catch(Exception ignored){}try{wm.addView(panelView,panelParams);}catch(Exception ignored){}}
+              void updateOverlay(){if(titleView!=null)titleView.setText(nick.isEmpty()?"ALMAS":nick);if(onlineView!=null){int n=0;long now=System.currentTimeMillis();for(long t:SEEN.values())if(now-t<16000)n++;onlineView.setText("● "+n+" online • mic ON");}if(stateView!=null&&selected!=null&&!selected.isEmpty())stateView.setText("Күтілуде: "+selected);((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(41,note());}
+          
+              void startVoiceCapture(){if(recording)return;recording=true;new Thread(()->{try{int sr=48000,min=AudioRecord.getMinBufferSize(sr,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT);rec=new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION,sr,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,Math.max(min*2,8192));byte[]buf=new byte[4096];rec.startRecording();while(recording)rec.read(buf,0,buf.length);}catch(Exception ignored){}finally{try{if(rec!=null)rec.release();}catch(Exception ignored){}}},"almas-mic").start();}
+              void disconnectMqtt(boolean clear){try{if(clear&&mqtt!=null&&mqtt.isConnected()&&!nick.isEmpty()){MqttMessage m=new MqttMessage(new byte[0]);m.setRetained(true);mqtt.publish(ROOT+"/"+roomKey+"/presence/"+topicSafe(nick),m);}if(mqtt!=null){try{mqtt.disconnect();}catch(Exception ignored){}try{mqtt.close();}catch(Exception ignored){}}}catch(Exception ignored){}mqtt=null;}
+              @Override public void onDestroy(){running=false;recording=false;if(heartbeat!=null&&worker!=null)worker.removeCallbacks(heartbeat);disconnectMqtt(true);try{if(rec!=null)rec.stop();}catch(Exception ignored){}if(wm!=null){if(panelView!=null)try{wm.removeView(panelView);}catch(Exception ignored){}if(tabView!=null)try{wm.removeView(tabView);}catch(Exception ignored){}}if(workerThread!=null)workerThread.quitSafely();super.onDestroy();}
+              static String topicSafe(String s){return s==null?"none":s.trim().replace('/','_').replace('+','_').replace('#','_').replace(' ','_');}
+              LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.HORIZONTAL);l.setGravity(Gravity.CENTER_VERTICAL);return l;}LinearLayout col(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}TextView t(String s,int z,int c,boolean bold){TextView v=new TextView(this);v.setText(s);v.setTextSize(z);v.setTextColor(c);if(bold)v.setTypeface(Typeface.DEFAULT_BOLD);return v;}Button b(String s,int c){Button v=new Button(this);v.setText(s);v.setTextColor(Color.WHITE);v.setTextSize(10);v.setAllCaps(false);GradientDrawable g=new GradientDrawable();g.setColor(c);g.setCornerRadius(dp(12));v.setBackground(g);return v;}int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
+              @Override public IBinder onBind(Intent i){return null;}
+          }
+          JAVA
+          cat > Almas_Official_BR_Android/app/src/main/java/kz/almasofficial/br/ScreenShareService.java <<'JAVA'
+          package kz.almasofficial.br;
+          
+          import android.app.*;
+          import android.content.Intent;
+          import android.graphics.*;
+          import android.hardware.display.DisplayManager;
+          import android.hardware.display.VirtualDisplay;
+          import android.media.Image;
+          import android.media.ImageReader;
+          import android.media.projection.MediaProjection;
+          import android.media.projection.MediaProjectionManager;
+          import android.os.*;
+          import org.eclipse.paho.client.mqttv3.*;
+          import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+          import java.io.ByteArrayOutputStream;
+          import java.util.UUID;
+          
+          public class ScreenShareService extends Service {
+              static final String CH="almas_screen", BROKER="ssl://broker.emqx.io:8883", ROOT="almasbr/v04";
+              MediaProjection projection; VirtualDisplay display; ImageReader reader; HandlerThread framesThread; Handler frames; MqttClient mqtt; String room,nick,topic; long lastFrame=0; final int W=854,H=480;
+              @Override public void onCreate(){super.onCreate();if(Build.VERSION.SDK_INT>=26){NotificationManager n=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);n.createNotificationChannel(new NotificationChannel(CH,"ALMAS Screen Share",NotificationManager.IMPORTANCE_LOW));}framesThread=new HandlerThread("almas-screen");framesThread.start();frames=new Handler(framesThread.getLooper());}
+              @Override public int onStartCommand(Intent intent,int flags,int startId){room=intent.getStringExtra("room");nick=intent.getStringExtra("nick");if(room==null)room="room";if(nick==null)nick="player";topic=ROOT+"/"+VoiceService.topicSafe(room)+"/screen/"+VoiceService.topicSafe(nick);startForeground(42,note());connectMqtt();int code=intent.getIntExtra("resultCode",0);Intent data=intent.getParcelableExtra("resultData");if(data==null)return START_NOT_STICKY;MediaProjectionManager m=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);projection=m.getMediaProjection(code,data);if(projection==null)return START_NOT_STICKY;projection.registerCallback(new MediaProjection.Callback(){@Override public void onStop(){stopSelf();}},frames);int dpi=getResources().getDisplayMetrics().densityDpi;reader=ImageReader.newInstance(W,H,PixelFormat.RGBA_8888,2);reader.setOnImageAvailableListener(r->sendLatest(r),frames);display=projection.createVirtualDisplay("AlmasMiniLive",W,H,dpi,DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,reader.getSurface(),null,frames);return START_STICKY;}
+              Notification note(){Notification.Builder b=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,CH):new Notification.Builder(this).setPriority(Notification.PRIORITY_LOW);return b.setContentTitle("ALMAS OFFICAL • Screen LIVE").setContentText(nick+" • "+W+"×"+H).setSmallIcon(android.R.drawable.presence_video_online).setOngoing(true).build();}
+              void connectMqtt(){frames.post(()->{try{mqtt=new MqttClient(BROKER,"almas-screen-"+UUID.randomUUID().toString().replace("-","").substring(0,16),new MemoryPersistence());MqttConnectOptions o=new MqttConnectOptions();o.setCleanSession(true);o.setAutomaticReconnect(true);o.setConnectionTimeout(8);o.setKeepAliveInterval(15);mqtt.connect(o);}catch(Exception ignored){}});}
+              void sendLatest(ImageReader r){Image img=null;try{img=r.acquireLatestImage();if(img==null)return;long now=System.currentTimeMillis();if(now-lastFrame<550)return;lastFrame=now;if(mqtt==null||!mqtt.isConnected())return;Image.Plane p=img.getPlanes()[0];int pixel=p.getPixelStride(),row=p.getRowStride(),pad=row-pixel*W;Bitmap full=Bitmap.createBitmap(W+pad/pixel,H,Bitmap.Config.ARGB_8888);full.copyPixelsFromBuffer(p.getBuffer());Bitmap crop=Bitmap.createBitmap(full,0,0,W,H);ByteArrayOutputStream out=new ByteArrayOutputStream(70000);crop.compress(Bitmap.CompressFormat.JPEG,58,out);byte[]bytes=out.toByteArray();MqttMessage m=new MqttMessage(bytes);m.setQos(0);m.setRetained(false);mqtt.publish(topic,m);if(crop!=full)full.recycle();crop.recycle();}catch(Exception ignored){}finally{if(img!=null)img.close();}}
+              @Override public void onDestroy(){if(display!=null)display.release();if(reader!=null)reader.close();if(projection!=null)projection.stop();try{if(mqtt!=null){mqtt.disconnect();mqtt.close();}}catch(Exception ignored){}if(framesThread!=null)framesThread.quitSafely();super.onDestroy();}
+              @Override public IBinder onBind(Intent i){return null;}
+          }
+          JAVA
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Almas_Official_BR_Android/app/build.gradle')
+          s=p.read_text()
+          if "org.eclipse.paho" not in s:
+              s += "\n\ndependencies {\n    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5'\n}\n"
+          s=s.replace("versionCode 3","versionCode 4").replace("versionName '0.3.0-floating'","versionName '0.4.0-nick-screen'")
+          p.write_text(s)
+          p=Path('Almas_Official_BR_Android/app/src/main/AndroidManifest.xml')
+          s=p.read_text()
+          # add GitHub.io HTTPS deep link to MainActivity
+          marker='            <intent-filter>\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="almasoffical" android:host="join" />\n            </intent-filter>'
+          extra=marker+'\n\n            <intent-filter>\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="https" android:host="jjjjjjjjjjjjjjae-hub.github.io" android:pathPrefix="/Chatgpt-Almas-/" />\n            </intent-filter>'
+          if 'jjjjjjjjjjjjjjae-hub.github.io' not in s: s=s.replace(marker,extra)
+          p.write_text(s)
+          PY
+
       - name: Build Debug APK
-        run: gradle -p Almas_Official_BR_Android_universal :app:assembleDebug --stacktrace
+        run: gradle -p Almas_Official_BR_Android :app:assembleDebug --stacktrace
+
       - name: Copy APK
-        run: cp Almas_Official_BR_Android_universal/app/build/outputs/apk/debug/app-debug.apk ALMAS-OFFICAL-BR-v0.4-NICK-LIVE.apk
+        run: cp Almas_Official_BR_Android/app/build/outputs/apk/debug/app-debug.apk ALMAS-OFFICAL-BR-v0.4-NICK-LIVE-debug.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ALMAS-OFFICAL-BR-v0.4-NICK-LIVE
-          path: ALMAS-OFFICAL-BR-v0.4-NICK-LIVE.apk
+          path: ALMAS-OFFICAL-BR-v0.4-NICK-LIVE-debug.apk
