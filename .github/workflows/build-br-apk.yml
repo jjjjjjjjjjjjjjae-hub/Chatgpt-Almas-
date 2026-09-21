@@ -1,4 +1,4 @@
-name: Build ALMAS OFFICAL BR v0.4
+name: Build ALMAS OFFICAL BR v0.5
 on:
   push:
     branches: [ apk-build ]
@@ -627,8 +627,8 @@ jobs:
               static final String PAGE="https://jjjjjjjjjjjjjjae-hub.github.io/Almas.offikal/br-live/";
               final int BG=Color.rgb(7,9,15), CARD=Color.rgb(18,22,34), CARD2=Color.rgb(25,30,45);
               final int PURPLE=Color.rgb(124,92,255), GREEN=Color.rgb(57,217,154), MUTED=Color.rgb(153,162,184);
-              SharedPreferences prefs; String room,nick,selected="";
-              TextView nickV,roomV,linkV,onlineV,selectedV,readyV; EditText search; LinearLayout players;
+              SharedPreferences prefs; String room,nick,selected="",pendingFriend="";
+              TextView nickV,roomV,linkV,onlineV,selectedV,readyV; EditText search; LinearLayout players,friendsBox;
               Handler refreshHandler=new Handler(Looper.getMainLooper());
           
               @Override public void onCreate(Bundle b){
@@ -636,9 +636,9 @@ jobs:
                   room=prefs.getString("room","AST-"+UUID.randomUUID().toString().replace("-","").substring(0,8).toUpperCase(Locale.US));
                   nick=prefs.getString("nick",""); selected=prefs.getString("selected",""); handle(getIntent());
                   setContentView(ui()); refresh(); refreshHandler.postDelayed(tick,1000);
-                  if(nick.trim().isEmpty()) new Handler().postDelayed(()->nickDialog(true),200);
+                  if(nick.trim().isEmpty()) new Handler().postDelayed(()->nickDialog(true),200); else new Handler().postDelayed(this::showPendingFriend,260);
               }
-              final Runnable tick=new Runnable(){public void run(){refreshPlayers();refreshHandler.postDelayed(this,2000);}};
+              final Runnable tick=new Runnable(){public void run(){refreshPlayers();refreshFriends();refreshHandler.postDelayed(this,2000);}};
               @Override protected void onDestroy(){refreshHandler.removeCallbacksAndMessages(null);super.onDestroy();}
               @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);handle(i);refresh();}
               @Override protected void onResume(){super.onResume();refreshReady();refreshPlayers();}
@@ -650,10 +650,12 @@ jobs:
           
                   root.addView(gap(14)); LinearLayout profile=card(CARD); profile.addView(sec("ПРОФИЛЬ / NICKNAME"));
                   LinearLayout pr=row(); TextView av=txt("A",20,Color.WHITE,true);av.setGravity(Gravity.CENTER);av.setBackground(round(PURPLE,999));pr.addView(av,new LinearLayout.LayoutParams(dp(50),dp(50)));pr.addView(gapH(10));
-                  nickV=txt("",18,Color.WHITE,true);pr.addView(nickV,new LinearLayout.LayoutParams(0,dp(50),1));Button rename=btn("Никті өзгерту",CARD2);rename.setOnClickListener(v->nickDialog(false));pr.addView(rename,new LinearLayout.LayoutParams(dp(132),dp(48)));profile.addView(pr);root.addView(profile);
+                  nickV=txt("",18,Color.WHITE,true);pr.addView(nickV,new LinearLayout.LayoutParams(0,dp(50),1));TextView fixed=txt("Тұрақты ник",11,MUTED,true);fixed.setGravity(Gravity.CENTER);pr.addView(fixed,new LinearLayout.LayoutParams(dp(116),dp(48)));profile.addView(pr);root.addView(profile);
+
+              root.addView(gap(14)); LinearLayout fcFriends=card(CARD);fcFriends.addView(sec("ДОСТАР"));friendsBox=col();fcFriends.addView(friendsBox);root.addView(fcFriends);
           
-                  root.addView(gap(14)); LinearLayout rc=card(CARD);rc.addView(sec("ҚОСЫЛУ СІЛТЕМЕСІ"));roomV=txt("",20,Color.WHITE,true);linkV=txt("",11,MUTED,false);linkV.setTextIsSelectable(true);rc.addView(roomV);rc.addView(gap(6));rc.addView(linkV);rc.addView(gap(10));
-                  LinearLayout rr=row();Button share=btn("Бөлісу",PURPLE),web=btn("GitHub.io ашу",CARD2);share.setOnClickListener(v->share());web.setOnClickListener(v->openWeb());rr.addView(share,weight());rr.addView(gapH(8));rr.addView(web,weight());rc.addView(rr);root.addView(rc);
+                  root.addView(gap(14)); LinearLayout rc=card(CARD);rc.addView(sec("ДОСҚА ШАҚЫРУ"));roomV=txt("",20,Color.WHITE,true);linkV=txt("",11,MUTED,false);linkV.setTextIsSelectable(true);rc.addView(roomV);rc.addView(gap(6));rc.addView(linkV);rc.addView(gap(10));
+                  LinearLayout rr=row();Button share=btn("Дос шақыру",PURPLE),web=btn("GitHub.io ашу",CARD2);share.setOnClickListener(v->share());web.setOnClickListener(v->openWeb());rr.addView(share,weight());rr.addView(gapH(8));rr.addView(web,weight());rc.addView(rr);root.addView(rc);
           
                   root.addView(gap(14)); LinearLayout pc=card(CARD);LinearLayout ph=row();ph.addView(sec("ОНЛАЙН ОЙЫНШЫЛАР"),new LinearLayout.LayoutParams(0,-2,1));onlineV=txt("0 online",12,GREEN,true);ph.addView(onlineV);pc.addView(ph);pc.addView(gap(8));players=col();pc.addView(players);root.addView(pc);
           
@@ -672,16 +674,19 @@ jobs:
           
               void nickDialog(boolean required){
                   final EditText e=new EditText(this);e.setSingleLine();e.setHint("Мысалы: Almas_01");e.setText(nick);e.setSelectAllOnFocus(true);e.setPadding(dp(14),0,dp(14),0);
-                  AlertDialog d=new AlertDialog.Builder(this).setTitle("Nickname").setMessage("Басқа ойыншылар сені осы никпен табады.").setView(e).setPositiveButton("Сақтау",null).setNegativeButton(required?"":"Бас тарту",null).create();
-                  d.setOnShowListener(x->d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{String n=e.getText().toString().trim();if(n.length()<2){e.setError("Кемінде 2 таңба");return;}nick=n.substring(0,Math.min(24,n.length()));prefs.edit().putString("nick",nick).apply();refresh();VoiceService.updateIdentity(this,room,nick);d.dismiss();}));
+                  AlertDialog d=new AlertDialog.Builder(this).setTitle("Nickname").setMessage("Басқа ойыншылар сені осы никпен табады.").setView(e).setPositiveButton("Сақтау",null).setNegativeButton(required?null:"Бас тарту",null).create();
+                  d.setOnShowListener(x->d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{String n=e.getText().toString().trim();if(n.length()<2){e.setError("Кемінде 2 таңба");return;}nick=n.substring(0,Math.min(24,n.length()));prefs.edit().putString("nick",nick).apply();refresh();VoiceService.updateIdentity(this,room,nick);d.dismiss();new Handler().postDelayed(this::showPendingFriend,180);}));
                   d.setCanceledOnTouchOutside(!required);d.show();
               }
-              void refresh(){if(nickV!=null)nickV.setText(nick.isEmpty()?"Nickname керек":nick);if(roomV!=null)roomV.setText(room);if(linkV!=null)linkV.setText(link());if(selectedV!=null)selectedV.setText(selected.isEmpty()?"Экран таңдалмаған":"Көріп тұрсың: "+selected);refreshReady();refreshPlayers();}
-              String link(){return PAGE+"?room="+Uri.encode(room);}
-              void share(){Intent i=new Intent(Intent.ACTION_SEND);i.setType("text/plain");i.putExtra(Intent.EXTRA_TEXT,"ALMAS OFFICAL • "+room+"\n"+link());startActivity(Intent.createChooser(i,"Қосылу сілтемесі"));}
+              void refresh(){if(nickV!=null)nickV.setText(nick.isEmpty()?"Nickname керек":nick);if(roomV!=null)roomV.setText("GitHub.io құрылғы байланысы");if(linkV!=null)linkV.setText(link());if(selectedV!=null)selectedV.setText(selected.isEmpty()?"Экран таңдалмаған":"Көріп тұрсың: "+selected);refreshReady();refreshPlayers();refreshFriends();}
+              String link(){return PAGE+"?room="+Uri.encode(room)+"&invite="+Uri.encode(nick.isEmpty()?"Player":nick);}
+              void share(){if(nick.isEmpty()){nickDialog(true);return;}Intent i=new Intent(Intent.ACTION_SEND);i.setType("text/plain");i.putExtra(Intent.EXTRA_TEXT,nick+" сені ALMAS OFFICAL-да досқа шақырды\n"+link());startActivity(Intent.createChooser(i,"Досқа шақыру"));}
               void openWeb(){startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(link())));}
-              void handle(Intent i){Uri d=i==null?null:i.getData();if(d==null)return;String r=d.getQueryParameter("room");if(r!=null&&!r.trim().isEmpty()){room=r.trim().substring(0,Math.min(40,r.trim().length()));prefs.edit().putString("room",room).apply();}}
-              void watch(String n){n=n.trim();if(n.isEmpty()){Toast.makeText(this,"Ник енгіз",Toast.LENGTH_SHORT).show();return;}selected=n.substring(0,Math.min(24,n.length()));prefs.edit().putString("selected",selected).apply();VoiceService.watch(this,room,nick,selected);refresh();Toast.makeText(this,selected+" экраны таңдалды",Toast.LENGTH_SHORT).show();}
+              void handle(Intent i){Uri d=i==null?null:i.getData();if(d==null)return;String r=d.getQueryParameter("room");if(r!=null&&!r.trim().isEmpty()){room=r.trim().substring(0,Math.min(40,r.trim().length()));prefs.edit().putString("room",room).apply();}String fr=d.getQueryParameter("friend");if(fr==null||fr.trim().isEmpty())fr=d.getQueryParameter("invite");if(fr!=null&&!fr.trim().isEmpty())pendingFriend=fr.trim().substring(0,Math.min(24,fr.trim().length()));}
+              void refreshFriends(){if(friendsBox==null)return;friendsBox.removeAllViews();Set<String> fs=new TreeSet<>(String.CASE_INSENSITIVE_ORDER);fs.addAll(prefs.getStringSet("friends",Collections.emptySet()));if(fs.isEmpty()){friendsBox.addView(txt("Әзірге дос жоқ. «Дос шақыру» арқылы қос.",12,MUTED,false));return;}for(String f:fs){LinearLayout r=row();TextView n=txt(f,15,Color.WHITE,true);r.addView(n,new LinearLayout.LayoutParams(0,dp(44),1));Button w=btn("Экран",CARD2);final String target=f;w.setOnClickListener(v->watch(target));r.addView(w,new LinearLayout.LayoutParams(dp(92),dp(42)));friendsBox.addView(r);friendsBox.addView(gap(5));}}
+            void addFriend(String f){if(f==null||f.trim().isEmpty()||f.equalsIgnoreCase(nick))return;Set<String> fs=new HashSet<>(prefs.getStringSet("friends",Collections.emptySet()));fs.add(f.trim());prefs.edit().putStringSet("friends",fs).apply();refreshFriends();}
+            void showPendingFriend(){if(pendingFriend==null||pendingFriend.isEmpty()||nick.isEmpty()||pendingFriend.equalsIgnoreCase(nick))return;final String inviter=pendingFriend;pendingFriend="";new AlertDialog.Builder(this).setTitle("Досқа шақыру").setMessage(inviter+" сені досқа шақырды. Қабылдайсың ба?").setNegativeButton("Бас тарту",null).setPositiveButton("Қабылдау",(d,w)->{addFriend(inviter);VoiceService.friendAccepted(this,room,nick,inviter);Toast.makeText(this,inviter+" досқа қосылды",Toast.LENGTH_SHORT).show();}).show();}
+            void watch(String n){n=n.trim();if(n.isEmpty()){Toast.makeText(this,"Ник енгіз",Toast.LENGTH_SHORT).show();return;}selected=n.substring(0,Math.min(24,n.length()));prefs.edit().putString("selected",selected).apply();VoiceService.watch(this,room,nick,selected);refresh();Toast.makeText(this,selected+" экраны таңдалды",Toast.LENGTH_SHORT).show();}
               void refreshPlayers(){if(players==null)return;List<String> list=VoiceService.onlinePlayers();players.removeAllViews();int count=0;for(String p:list){if(System.currentTimeMillis()-VoiceService.lastSeen(p)>16000)continue;count++;LinearLayout row=row();TextView n=txt(p,15,Color.WHITE,true);row.addView(n,new LinearLayout.LayoutParams(0,dp(44),1));Button w=btn("Көру",CARD2);final String target=p;w.setOnClickListener(v->watch(target));row.addView(w,new LinearLayout.LayoutParams(dp(90),dp(42)));players.addView(row);players.addView(gap(5));}if(count==0)players.addView(txt(VoiceService.isRunning()?"Әзірге басқа ойыншы жоқ":"Алдымен «Бөлмеге қосылу» бас",12,MUTED,false));if(onlineV!=null)onlineV.setText(count+" online");}
           
               boolean overlayOk(){return Build.VERSION.SDK_INT<23||Settings.canDrawOverlays(this);}void overlayPermission(){if(overlayOk()){Toast.makeText(this,"Floating рұқсаты бар",Toast.LENGTH_SHORT).show();return;}startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));}
@@ -716,10 +721,10 @@ jobs:
           import java.util.concurrent.ConcurrentHashMap;
           
           public class VoiceService extends Service {
-              public static final String ACTION_WATCH="kz.almasofficial.br.WATCH", ACTION_IDENTITY="kz.almasofficial.br.IDENTITY";
+              public static final String ACTION_WATCH="kz.almasofficial.br.WATCH", ACTION_IDENTITY="kz.almasofficial.br.IDENTITY", ACTION_FRIEND="kz.almasofficial.br.FRIEND_ACCEPT";
               static final String BROKER="ssl://broker.emqx.io:8883", ROOT="almasbr/v04"; static volatile boolean running=false;
               static final ConcurrentHashMap<String,Long> SEEN=new ConcurrentHashMap<>(); static final ConcurrentHashMap<String,String> KEY_NAME=new ConcurrentHashMap<>();
-              MqttClient mqtt; String room="",nick="",selected="",roomKey=""; Handler main=new Handler(Looper.getMainLooper()); HandlerThread workerThread; Handler worker; Runnable heartbeat;
+              MqttClient mqtt; String room="",nick="",selected="",roomKey="",pendingFriendTarget="",pendingFriendName=""; Handler main=new Handler(Looper.getMainLooper()); HandlerThread workerThread; Handler worker; Runnable heartbeat;
               WindowManager wm; View panelView,tabView; WindowManager.LayoutParams panelParams,tabParams; ImageView remoteImage; TextView titleView,onlineView,stateView;
               volatile boolean recording=false; AudioRecord rec;
           
@@ -728,18 +733,20 @@ jobs:
               public static void connect(Context c,String room,String nick,String selected){Intent i=new Intent(c,VoiceService.class);i.putExtra("room",room);i.putExtra("nick",nick);i.putExtra("target",selected);start(c,i);}
               public static void watch(Context c,String room,String nick,String target){Intent i=new Intent(c,VoiceService.class);i.setAction(ACTION_WATCH);i.putExtra("room",room);i.putExtra("nick",nick);i.putExtra("target",target);start(c,i);}
               public static void updateIdentity(Context c,String room,String nick){if(!running)return;Intent i=new Intent(c,VoiceService.class);i.setAction(ACTION_IDENTITY);i.putExtra("room",room);i.putExtra("nick",nick);start(c,i);}
+              public static void friendAccepted(Context c,String room,String nick,String inviter){Intent i=new Intent(c,VoiceService.class);i.setAction(ACTION_FRIEND);i.putExtra("room",room);i.putExtra("nick",nick);i.putExtra("friendTarget",inviter);i.putExtra("friendName",nick);start(c,i);}
               static void start(Context c,Intent i){if(Build.VERSION.SDK_INT>=26)c.startForegroundService(i);else c.startService(i);}
           
               @Override public void onCreate(){super.onCreate();running=true;workerThread=new HandlerThread("almas-realtime");workerThread.start();worker=new Handler(workerThread.getLooper());if(Build.VERSION.SDK_INT>=26){NotificationManager n=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);n.createNotificationChannel(new NotificationChannel("almas_live","ALMAS Live",NotificationManager.IMPORTANCE_LOW));}}
-              @Override public int onStartCommand(Intent i,int flags,int id){startForeground(41,note());String oldRoom=room,oldNick=nick;if(i!=null){String x=i.getStringExtra("room");if(x!=null&&!x.trim().isEmpty())room=x.trim();x=i.getStringExtra("nick");if(x!=null&&!x.trim().isEmpty())nick=x.trim();x=i.getStringExtra("target");if(x!=null)selected=x.trim();}ensureOverlay();updateOverlay();boolean changed=!oldRoom.equals(room)||!oldNick.equals(nick);if(mqtt==null||!mqtt.isConnected()||changed)worker.post(()->reconnect());else if(i!=null&&ACTION_WATCH.equals(i.getAction()))worker.post(()->subscribeScreen(selected));startVoiceCapture();return START_STICKY;}
+              @Override public int onStartCommand(Intent i,int flags,int id){startForeground(41,note());String oldRoom=room,oldNick=nick;if(i!=null){String x=i.getStringExtra("room");if(x!=null&&!x.trim().isEmpty())room=x.trim();x=i.getStringExtra("nick");if(x!=null&&!x.trim().isEmpty())nick=x.trim();x=i.getStringExtra("target");if(x!=null)selected=x.trim();x=i.getStringExtra("friendTarget");if(x!=null)pendingFriendTarget=x.trim();x=i.getStringExtra("friendName");if(x!=null)pendingFriendName=x.trim();}ensureOverlay();updateOverlay();boolean changed=!oldRoom.equals(room)||!oldNick.equals(nick);if(mqtt==null||!mqtt.isConnected()||changed)worker.post(()->reconnect());else {if(i!=null&&ACTION_WATCH.equals(i.getAction()))worker.post(()->subscribeScreen(selected));if(i!=null&&ACTION_FRIEND.equals(i.getAction()))worker.post(this::publishFriendAccept);}startVoiceCapture();return START_STICKY;}
               Notification note(){Notification.Builder b=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,"almas_live"):new Notification.Builder(this).setPriority(Notification.PRIORITY_LOW);Intent open=new Intent(this,MainActivity.class);open.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);int fl=PendingIntent.FLAG_UPDATE_CURRENT|(Build.VERSION.SDK_INT>=23?PendingIntent.FLAG_IMMUTABLE:0);PendingIntent pi=PendingIntent.getActivity(this,9,open,fl);return b.setContentTitle("ALMAS OFFICAL • "+(nick.isEmpty()?"Live":nick)).setContentText(selected.isEmpty()?"Бөлме: "+room:"Көріп тұрсың: "+selected).setSmallIcon(android.R.drawable.presence_video_online).setContentIntent(pi).setOngoing(true).build();}
           
               void reconnect(){disconnectMqtt(false);if(room.isEmpty()||nick.isEmpty())return;roomKey=topicSafe(room);try{mqtt=new MqttClient(BROKER,"almas-"+UUID.randomUUID().toString().replace("-","").substring(0,18),new MemoryPersistence());mqtt.setCallback(new MqttCallbackExtended(){public void connectComplete(boolean reconnect,String serverURI){subscribeBase();}public void connectionLost(Throwable cause){}public void deliveryComplete(IMqttDeliveryToken t){}public void messageArrived(String topic,MqttMessage msg){handleMessage(topic,msg);}});MqttConnectOptions o=new MqttConnectOptions();o.setCleanSession(true);o.setAutomaticReconnect(true);o.setConnectionTimeout(8);o.setKeepAliveInterval(15);mqtt.connect(o);subscribeBase();scheduleHeartbeat();}catch(Exception e){main.post(()->{if(stateView!=null)stateView.setText("Realtime connection error");});}}
-              void subscribeBase(){try{if(mqtt==null||!mqtt.isConnected())return;mqtt.subscribe(ROOT+"/"+roomKey+"/presence/+",0);subscribeScreen(selected);publishPresence();}catch(Exception ignored){}}
+              void subscribeBase(){try{if(mqtt==null||!mqtt.isConnected())return;mqtt.subscribe(ROOT+"/"+roomKey+"/presence/+",0);mqtt.subscribe(ROOT+"/"+roomKey+"/friend/"+topicSafe(nick),0);subscribeScreen(selected);publishPresence();if(!pendingFriendTarget.isEmpty())publishFriendAccept();}catch(Exception ignored){}}
               void subscribeScreen(String target){try{if(mqtt==null||!mqtt.isConnected())return;try{mqtt.unsubscribe(ROOT+"/"+roomKey+"/screen/#");}catch(Exception ignored){}if(target!=null&&!target.trim().isEmpty())mqtt.subscribe(ROOT+"/"+roomKey+"/screen/"+topicSafe(target),0);}catch(Exception ignored){}main.post(this::updateOverlay);}
               void scheduleHeartbeat(){if(heartbeat!=null)worker.removeCallbacks(heartbeat);heartbeat=new Runnable(){public void run(){publishPresence();if(worker!=null)worker.postDelayed(this,5000);}};worker.post(heartbeat);}
+              void publishFriendAccept(){try{if(mqtt==null||!mqtt.isConnected()||pendingFriendTarget.isEmpty()||pendingFriendName.isEmpty())return;MqttMessage m=new MqttMessage(pendingFriendName.getBytes(StandardCharsets.UTF_8));m.setQos(0);m.setRetained(true);mqtt.publish(ROOT+"/"+roomKey+"/friend/"+topicSafe(pendingFriendTarget),m);pendingFriendTarget="";pendingFriendName="";}catch(Exception ignored){}}
               void publishPresence(){try{if(mqtt==null||!mqtt.isConnected()||nick.isEmpty())return;long ts=System.currentTimeMillis();String payload=nick+"|"+ts;MqttMessage m=new MqttMessage(payload.getBytes(StandardCharsets.UTF_8));m.setQos(0);m.setRetained(true);mqtt.publish(ROOT+"/"+roomKey+"/presence/"+topicSafe(nick),m);SEEN.put(nick,ts);KEY_NAME.put(topicSafe(nick),nick);main.post(this::updateOverlay);}catch(Exception ignored){}}
-              void handleMessage(String topic,MqttMessage msg){if(topic.contains("/presence/")){String k=topic.substring(topic.lastIndexOf('/')+1);String s=new String(msg.getPayload(),StandardCharsets.UTF_8);if(s.isEmpty()){String n=KEY_NAME.remove(k);if(n!=null)SEEN.remove(n);return;}String[]p=s.split("\\|",2);if(p.length==2){try{long ts=Long.parseLong(p[1]);SEEN.put(p[0],ts);KEY_NAME.put(k,p[0]);}catch(Exception ignored){}}main.post(this::updateOverlay);return;}if(topic.contains("/screen/")&&msg.getPayload()!=null&&msg.getPayload().length>100){byte[]data=msg.getPayload();Bitmap bm=BitmapFactory.decodeByteArray(data,0,data.length);if(bm!=null)main.post(()->{if(remoteImage!=null){remoteImage.setImageBitmap(bm);if(stateView!=null)stateView.setText((selected.isEmpty()?"Remote":selected)+" • LIVE");}});}}
+              void handleMessage(String topic,MqttMessage msg){if(topic.contains("/friend/")){String fr=new String(msg.getPayload(),StandardCharsets.UTF_8).trim();if(!fr.isEmpty()&&!fr.equalsIgnoreCase(nick)){Set<String> fs=new HashSet<>(getSharedPreferences("almas_br",MODE_PRIVATE).getStringSet("friends",Collections.emptySet()));fs.add(fr);getSharedPreferences("almas_br",MODE_PRIVATE).edit().putStringSet("friends",fs).apply();try{MqttMessage clear=new MqttMessage(new byte[0]);clear.setRetained(true);mqtt.publish(topic,clear);}catch(Exception ignored){}main.post(()->Toast.makeText(this,fr+" досқа қосылды",Toast.LENGTH_SHORT).show());}return;}if(topic.contains("/presence/")){String k=topic.substring(topic.lastIndexOf('/')+1);String s=new String(msg.getPayload(),StandardCharsets.UTF_8);if(s.isEmpty()){String n=KEY_NAME.remove(k);if(n!=null)SEEN.remove(n);return;}String[]p=s.split("\\|",2);if(p.length==2){try{long ts=Long.parseLong(p[1]);SEEN.put(p[0],ts);KEY_NAME.put(k,p[0]);}catch(Exception ignored){}}main.post(this::updateOverlay);return;}if(topic.contains("/screen/")&&msg.getPayload()!=null&&msg.getPayload().length>100){byte[]data=msg.getPayload();Bitmap bm=BitmapFactory.decodeByteArray(data,0,data.length);if(bm!=null)main.post(()->{if(remoteImage!=null){remoteImage.setImageBitmap(bm);if(stateView!=null)stateView.setText((selected.isEmpty()?"Remote":selected)+" • LIVE");}});}}
           
               void ensureOverlay(){if(panelView!=null||(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)))return;wm=(WindowManager)getSystemService(WINDOW_SERVICE);buildPanel();showPanel();}
               void buildPanel(){LinearLayout box=col();box.setPadding(dp(10),dp(9),dp(10),dp(10));GradientDrawable bg=new GradientDrawable();bg.setColor(Color.argb(242,11,14,23));bg.setCornerRadius(dp(18));bg.setStroke(dp(1),Color.rgb(124,92,255));box.setBackground(bg);LinearLayout head=row();TextView face=t(nick.isEmpty()?"A":nick.substring(0,1).toUpperCase(),16,Color.WHITE,true);face.setGravity(Gravity.CENTER);GradientDrawable fb=new GradientDrawable();fb.setColor(Color.rgb(124,92,255));fb.setCornerRadius(dp(999));face.setBackground(fb);head.addView(face,new LinearLayout.LayoutParams(dp(36),dp(36)));LinearLayout info=col();info.setPadding(dp(8),0,0,0);titleView=t(nick.isEmpty()?"ALMAS":nick,13,Color.WHITE,true);onlineView=t("● realtime",10,Color.rgb(57,217,154),false);info.addView(titleView);info.addView(onlineView);head.addView(info,new LinearLayout.LayoutParams(0,dp(38),1));Button hide=b("Жасыру",Color.rgb(35,40,56));hide.setOnClickListener(v->hidePanel(nearestSide()));head.addView(hide,new LinearLayout.LayoutParams(dp(86),dp(38)));box.addView(head);head.setOnTouchListener(dragListener());remoteImage=new ImageView(this);remoteImage.setScaleType(ImageView.ScaleType.FIT_CENTER);remoteImage.setBackgroundColor(Color.rgb(3,5,9));LinearLayout.LayoutParams ip=new LinearLayout.LayoutParams(-1,dp(145));ip.topMargin=dp(8);box.addView(remoteImage,ip);stateView=t("Экран таңда: қолданбадағы никті бас",11,Color.rgb(163,171,193),false);LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.topMargin=dp(7);box.addView(stateView,sp);panelView=box;int type=Build.VERSION.SDK_INT>=26?WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY:WindowManager.LayoutParams.TYPE_PHONE;panelParams=new WindowManager.LayoutParams(dp(285),-2,type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,PixelFormat.TRANSLUCENT);panelParams.gravity=Gravity.TOP|Gravity.START;panelParams.x=dp(12);panelParams.y=dp(92);}
@@ -793,7 +800,7 @@ jobs:
           s=p.read_text()
           if "org.eclipse.paho" not in s:
               s += "\n\ndependencies {\n    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5'\n}\n"
-          s=s.replace("versionCode 3","versionCode 4").replace("versionName '0.3.0-floating'","versionName '0.4.0-nick-screen'")
+          s=s.replace("versionCode 3","versionCode 5").replace("versionName '0.3.0-floating'","versionName '0.5.0-friends'")
           p.write_text(s)
           p=Path('Almas_Official_BR_Android/app/src/main/AndroidManifest.xml')
           s=p.read_text()
@@ -808,10 +815,10 @@ jobs:
         run: gradle -p Almas_Official_BR_Android :app:assembleDebug --stacktrace
 
       - name: Copy APK
-        run: cp Almas_Official_BR_Android/app/build/outputs/apk/debug/app-debug.apk ALMAS-OFFICAL-BR-v0.4-NICK-LIVE-debug.apk
+        run: cp Almas_Official_BR_Android/app/build/outputs/apk/debug/app-debug.apk ALMAS-OFFICAL-BR-v0.5-FRIENDS-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ALMAS-OFFICAL-BR-v0.4-NICK-LIVE
-          path: ALMAS-OFFICAL-BR-v0.4-NICK-LIVE-debug.apk
+          name: ALMAS-OFFICAL-BR-v0.5-FRIENDS
+          path: ALMAS-OFFICAL-BR-v0.5-FRIENDS-debug.apk
