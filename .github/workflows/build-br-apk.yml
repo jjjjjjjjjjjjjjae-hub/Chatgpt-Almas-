@@ -279,14 +279,142 @@ jobs:
           base64 -d /tmp/br.b64 > /tmp/br.zip
           unzip -q /tmp/br.zip -d "$GITHUB_WORKSPACE"
 
+      - name: Make universal Android 5+ build
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path("Almas_Official_BR_Android")
+
+          p = root / "app/build.gradle"
+          s = p.read_text()
+          s = s.replace("applicationId 'kz.almasofficial.br'", "applicationId 'kz.almasofficial.br.universal'")
+          s = s.replace("minSdk 26", "minSdk 21")
+          s = s.replace("versionCode 1", "versionCode 2")
+          s = s.replace("versionName '0.1.0'", "versionName '0.2.0-universal'")
+          p.write_text(s)
+
+          p = root / "app/src/main/AndroidManifest.xml"
+          s = p.read_text().replace('android:label="ALMAS OFFICAL"', 'android:label="ALMAS OFFICAL Universal"')
+          p.write_text(s)
+
+          p = root / "app/src/main/java/kz/almasofficial/br/MainActivity.java"
+          s = p.read_text()
+          s = s.replace("""    private List<String> missingPermissions() {
+              List<String> out = new ArrayList<>();
+              if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                  out.add(Manifest.permission.RECORD_AUDIO);
+              }
+              if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                  out.add(Manifest.permission.POST_NOTIFICATIONS);
+              }
+              return out;
+          }
+          """, """    private List<String> missingPermissions() {
+              List<String> out = new ArrayList<>();
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                  if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                      out.add(Manifest.permission.RECORD_AUDIO);
+                  }
+                  if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                      out.add(Manifest.permission.POST_NOTIFICATIONS);
+                  }
+              }
+              return out;
+          }
+          """)
+          s = s.replace("        requestPermissions(missing.toArray(new String[0]), REQ_PERMS);",
+                        "        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {\n            requestPermissions(missing.toArray(new String[0]), REQ_PERMS);\n        } else {\n            refreshReadiness();\n        }")
+          s = s.replace("""        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+              requestNeededPermissions();
+              return;
+          }
+          Intent i = new Intent(this, VoiceService.class);
+          i.putExtra("room", roomCode);
+          startForegroundService(i);
+          """, """        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                  checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+              requestNeededPermissions();
+              return;
+          }
+          Intent i = new Intent(this, VoiceService.class);
+          i.putExtra("room", roomCode);
+          startServiceCompat(i);
+          """)
+          s = s.replace('            startForegroundService(s);', '            startServiceCompat(s);')
+          s = s.replace("    private void launchBlackRussia() {",
+                        "    private void startServiceCompat(Intent intent) {\n        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {\n            startForegroundService(intent);\n        } else {\n            startService(intent);\n        }\n    }\n\n    private void launchBlackRussia() {")
+          p.write_text(s)
+
+          p = root / "app/src/main/java/kz/almasofficial/br/VoiceService.java"
+          s = p.read_text()
+          s = s.replace("""        NotificationManager nm = getSystemService(NotificationManager.class);
+          nm.createNotificationChannel(new NotificationChannel(CHANNEL, "ALMAS Voice", NotificationManager.IMPORTANCE_LOW));
+          """, """        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+              NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+              nm.createNotificationChannel(new NotificationChannel(CHANNEL, "ALMAS Voice", NotificationManager.IMPORTANCE_LOW));
+          }
+          """)
+          s = s.replace("""        Notification n = new Notification.Builder(this, CHANNEL)
+                  .setContentTitle("ALMAS OFFICAL • Voice")
+                  .setContentText("Бөлме: " + room)
+                  .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+                  .setOngoing(true)
+                  .build();
+          """, """        Notification.Builder builder;
+          if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+              builder = new Notification.Builder(this, CHANNEL);
+          } else {
+              builder = new Notification.Builder(this).setPriority(Notification.PRIORITY_LOW);
+          }
+          Notification n = builder
+                  .setContentTitle("ALMAS OFFICAL • Voice")
+                  .setContentText("Бөлме: " + room)
+                  .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+                  .setOngoing(true)
+                  .build();
+          """)
+          p.write_text(s)
+
+          p = root / "app/src/main/java/kz/almasofficial/br/ScreenShareService.java"
+          s = p.read_text()
+          s = s.replace("""        NotificationManager nm = getSystemService(NotificationManager.class);
+          nm.createNotificationChannel(new NotificationChannel(CHANNEL, "ALMAS Screen Share", NotificationManager.IMPORTANCE_LOW));
+          """, """        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+              NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+              nm.createNotificationChannel(new NotificationChannel(CHANNEL, "ALMAS Screen Share", NotificationManager.IMPORTANCE_LOW));
+          }
+          """)
+          s = s.replace("""        Notification n = new Notification.Builder(this, CHANNEL)
+                  .setContentTitle("ALMAS OFFICAL • 1080p Screen Share")
+                  .setContentText("Экран capture жұмыс істеп тұр")
+                  .setSmallIcon(android.R.drawable.presence_video_online)
+                  .setOngoing(true)
+                  .build();
+          """, """        Notification.Builder builder;
+          if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+              builder = new Notification.Builder(this, CHANNEL);
+          } else {
+              builder = new Notification.Builder(this).setPriority(Notification.PRIORITY_LOW);
+          }
+          Notification n = builder
+                  .setContentTitle("ALMAS OFFICAL • 1080p Screen Share")
+                  .setContentText("Экран capture жұмыс істеп тұр")
+                  .setSmallIcon(android.R.drawable.presence_video_online)
+                  .setOngoing(true)
+                  .build();
+          """)
+          p.write_text(s)
+          PY
+
       - name: Build Debug APK
         run: gradle -p Almas_Official_BR_Android :app:assembleDebug --stacktrace
 
       - name: Copy APK
-        run: cp Almas_Official_BR_Android/app/build/outputs/apk/debug/app-debug.apk ALMAS-OFFICAL-BR-v0.1-debug.apk
+        run: cp Almas_Official_BR_Android/app/build/outputs/apk/debug/app-debug.apk ALMAS-OFFICAL-BR-v0.2-UNIVERSAL-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ALMAS-OFFICAL-BR-v0.1
-          path: ALMAS-OFFICAL-BR-v0.1-debug.apk
+          name: ALMAS-OFFICAL-BR-v0.2-UNIVERSAL
+          path: ALMAS-OFFICAL-BR-v0.2-UNIVERSAL-debug.apk
