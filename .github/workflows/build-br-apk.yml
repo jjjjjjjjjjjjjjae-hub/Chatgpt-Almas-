@@ -407,14 +407,208 @@ jobs:
           p.write_text(s)
           PY
 
+      - name: Apply v0.3 floating companion
+        shell: bash
+        run: |
+          cat > Almas_Official_BR_Android/app/src/main/java/kz/almasofficial/br/MainActivity.java <<'JAVA'
+          package kz.almasofficial.br;
+          
+          import android.Manifest;
+          import android.app.Activity;
+          import android.content.*;
+          import android.content.pm.PackageManager;
+          import android.graphics.Color;
+          import android.graphics.Typeface;
+          import android.graphics.drawable.GradientDrawable;
+          import android.media.projection.MediaProjectionManager;
+          import android.net.Uri;
+          import android.os.*;
+          import android.provider.Settings;
+          import android.text.InputType;
+          import android.view.*;
+          import android.widget.*;
+          import java.util.*;
+          
+          public class MainActivity extends Activity {
+            static final int REQ_PERMS=2001, REQ_CAPTURE=2002;
+            static final String GAME="com.launcher.brgame", PREFS="almas_br";
+            final int BG=Color.rgb(7,9,15), CARD=Color.rgb(18,22,34), CARD2=Color.rgb(25,30,45);
+            final int PURPLE=Color.rgb(124,92,255), GREEN=Color.rgb(57,217,154), ORANGE=Color.rgb(255,183,77), MUTED=Color.rgb(153,162,184);
+            SharedPreferences prefs; String room,status; int queue;
+            TextView roomV,linkV,queueV,statusV,readyV; EditText queueInput; Button start;
+          
+            @Override public void onCreate(Bundle b){
+              super.onCreate(b);
+              prefs=getSharedPreferences(PREFS,MODE_PRIVATE);
+              room=prefs.getString("room","AST-"+UUID.randomUUID().toString().replace("-","").substring(0,6).toUpperCase(Locale.US));
+              status=prefs.getString("status","Кезектемін"); queue=prefs.getInt("queue",0);
+              handle(getIntent()); setContentView(ui()); refresh();
+            }
+            @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);handle(i);refresh();}
+            @Override protected void onResume(){super.onResume();refreshReady();}
+          
+            View ui(){
+              ScrollView s=new ScrollView(this); s.setFillViewport(true); s.setBackgroundColor(BG);
+              LinearLayout r=col(); r.setPadding(dp(16),dp(18),dp(16),dp(32)); s.addView(r);
+          
+              LinearLayout hero=card(PURPLE);
+              hero.addView(txt("ALMAS OFFICAL",28,Color.WHITE,true));
+              hero.addView(txt("BLACK RUSSIA • ASTANA COMPANION",12,Color.WHITE,true));
+              hero.addView(gap(8)); hero.addView(txt("VOICE • ROOM LINK • QUEUE • FLOATING",12,Color.WHITE,false)); r.addView(hero);
+          
+              r.addView(gap(14)); LinearLayout rc=card(CARD); rc.addView(sec("БӨЛМЕ / ROOM"));
+              roomV=txt("",21,Color.WHITE,true); linkV=txt("",12,MUTED,false); linkV.setTextIsSelectable(true);
+              rc.addView(roomV); rc.addView(gap(7)); rc.addView(linkV); rc.addView(gap(11));
+              LinearLayout lr=row(); Button copy=btn("Сілтемені көшіру",PURPLE), share=btn("Бөлісу",CARD2);
+              copy.setOnClickListener(v->copy()); share.setOnClickListener(v->share());
+              lr.addView(copy,weight()); lr.addView(gapH(8)); lr.addView(share,weight()); rc.addView(lr); r.addView(rc);
+          
+              r.addView(gap(14)); LinearLayout pc=card(CARD); LinearLayout ph=row();
+              ph.addView(sec("ҚОСЫЛҒАНДАР"),new LinearLayout.LayoutParams(0,-2,1)); ph.addView(txt("1 online",12,GREEN,true)); pc.addView(ph); pc.addView(gap(10));
+              LinearLayout person=row(); TextView av=txt("A",20,Color.WHITE,true); av.setGravity(Gravity.CENTER); av.setBackground(round(PURPLE,999));
+              person.addView(av,new LinearLayout.LayoutParams(dp(48),dp(48))); person.addView(gapH(11));
+              LinearLayout inf=col(); inf.setGravity(Gravity.CENTER_VERTICAL); inf.addView(txt("Almas • Сен",16,Color.WHITE,true)); inf.addView(txt("● Voice дайын • floating бет",12,GREEN,false));
+              person.addView(inf,new LinearLayout.LayoutParams(0,dp(50),1)); pc.addView(person); r.addView(pc);
+          
+              r.addView(gap(14)); LinearLayout qc=card(CARD); qc.addView(sec("ASTANA • ОЧЕРЕДЬ"));
+              queueV=txt("",30,ORANGE,true); statusV=txt("",14,ORANGE,true); qc.addView(queueV); qc.addView(statusV); qc.addView(gap(10));
+              LinearLayout qr=row(); queueInput=new EditText(this); queueInput.setSingleLine(); queueInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+              queueInput.setHint("Мысалы: 37"); queueInput.setHintTextColor(Color.rgb(100,109,132)); queueInput.setTextColor(Color.WHITE); queueInput.setTextSize(16);
+              queueInput.setPadding(dp(14),0,dp(14),0); queueInput.setBackground(round(CARD2,16)); if(queue>0)queueInput.setText(String.valueOf(queue));
+              Button save=btn("Сақтау",PURPLE); save.setOnClickListener(v->saveQueue());
+              qr.addView(queueInput,new LinearLayout.LayoutParams(0,dp(52),1)); qr.addView(gapH(8)); qr.addView(save,new LinearLayout.LayoutParams(dp(105),dp(52))); qc.addView(qr); qc.addView(gap(9));
+              LinearLayout sr=row(); Button q=btn("Кезектемін",CARD2), joined=btn("Серверге кірдім",CARD2);
+              q.setOnClickListener(v->setStatus("Кезектемін")); joined.setOnClickListener(v->setStatus("Серверге кірдім"));
+              sr.addView(q,weight()); sr.addView(gapH(8)); sr.addView(joined,weight()); qc.addView(sr); r.addView(qc);
+          
+              r.addView(gap(14)); LinearLayout fc=card(CARD); fc.addView(sec("VOICE / FLOATING"));
+              readyV=txt("",14,Color.WHITE,true); fc.addView(readyV); fc.addView(gap(9));
+              Button over=btn("Floating терезеге рұқсат",CARD2), perms=btn("Микрофон рұқсаттарын беру",CARD2), voice=btn("🎙 Voice + floating panel",PURPLE);
+              over.setOnClickListener(v->overlayPermission()); perms.setOnClickListener(v->askPerms()); voice.setOnClickListener(v->startVoice(false));
+              fc.addView(over); fc.addView(gap(8)); fc.addView(perms); fc.addView(gap(8)); fc.addView(voice); r.addView(fc);
+          
+              r.addView(gap(14)); LinearLayout tc=card(CARD); tc.addView(sec("ҚОСЫМША"));
+              Button screen=btn("▣ 1080p экран бөлісуді бастау",CARD2); screen.setOnClickListener(v->capture()); tc.addView(screen);
+              tc.addView(gap(8)); Button map=btn("⌖ Карта / teammate белгісі",CARD2); map.setOnClickListener(v->Toast.makeText(this,"Teammate auto-sync сервер қосылғанда іске қосылады.",Toast.LENGTH_LONG).show()); tc.addView(map); r.addView(tc);
+          
+              r.addView(gap(18)); start=btn("START • BLACK RUSSIA",PURPLE); start.setTextSize(18); start.setMinHeight(dp(64)); start.setOnClickListener(v->launch()); r.addView(start);
+              r.addView(gap(9)); r.addView(txt("START → Voice + floating панель → BLACK RUSSIA. Панель қолданбадан шықсаң да көрінеді.",12,MUTED,false));
+              return s;
+            }
+          
+            void refresh(){
+              if(roomV!=null)roomV.setText(room); if(linkV!=null)linkV.setText(link());
+              if(queueV!=null){queueV.setText(queue>0?"Очередь: "+queue:"Очередь: —");queueV.setTextColor(queue>0?ORANGE:MUTED);}
+              if(statusV!=null){statusV.setText(status);statusV.setTextColor("Серверге кірдім".equals(status)?GREEN:ORANGE);}
+              refreshReady();
+            }
+            String link(){return "almasoffical://join?room="+Uri.encode(room);}
+            void copy(){((ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("ALMAS room",link()));Toast.makeText(this,"Сілтеме көшірілді",Toast.LENGTH_SHORT).show();}
+            void share(){Intent i=new Intent(Intent.ACTION_SEND);i.setType("text/plain");i.putExtra(Intent.EXTRA_TEXT,"ALMAS OFFICAL • BLACK RUSSIA\nRoom: "+room+"\n"+link());startActivity(Intent.createChooser(i,"Бөлме сілтемесін жіберу"));}
+            void handle(Intent i){Uri d=i==null?null:i.getData();if(d!=null&&"almasoffical".equalsIgnoreCase(d.getScheme())&&"join".equalsIgnoreCase(d.getHost())){String x=d.getQueryParameter("room");if(x!=null&&!x.trim().isEmpty()){room=x.trim();prefs.edit().putString("room",room).apply();Toast.makeText(this,"Бөлмеге қосылдың: "+room,Toast.LENGTH_LONG).show();}}}
+            void saveQueue(){try{String x=queueInput.getText().toString().trim();queue=x.isEmpty()?0:Math.max(0,Integer.parseInt(x));}catch(Exception e){queue=0;}prefs.edit().putInt("queue",queue).apply();refresh();updateVoice();}
+            void setStatus(String x){status=x;if("Серверге кірдім".equals(x)){queue=0;queueInput.setText("");}prefs.edit().putString("status",status).putInt("queue",queue).apply();refresh();updateVoice();}
+          
+            boolean overlayOk(){return Build.VERSION.SDK_INT<23||Settings.canDrawOverlays(this);}
+            void overlayPermission(){if(overlayOk()){Toast.makeText(this,"Floating рұқсаты бар",Toast.LENGTH_SHORT).show();return;}startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));}
+            List<String> missing(){List<String> a=new ArrayList<>();if(Build.VERSION.SDK_INT>=23){if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED)a.add(Manifest.permission.RECORD_AUDIO);if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)a.add(Manifest.permission.POST_NOTIFICATIONS);}return a;}
+            void askPerms(){List<String>a=missing();if(a.isEmpty()){Toast.makeText(this,"Микрофон дайын",Toast.LENGTH_SHORT).show();return;}requestPermissions(a.toArray(new String[0]),REQ_PERMS);}
+            @Override public void onRequestPermissionsResult(int r,String[]p,int[]g){super.onRequestPermissionsResult(r,p,g);refreshReady();}
+            void refreshReady(){if(readyV==null)return;boolean m=missing().isEmpty(),o=overlayOk();readyV.setText((m?"✓ Микрофон":"• Микрофон керек")+"   "+(o?"✓ Floating":"• Floating керек"));readyV.setTextColor(m&&o?GREEN:ORANGE);if(start!=null)start.setAlpha(m&&o?1f:.72f);}
+          
+            void startVoice(boolean silent){if(!missing().isEmpty()){askPerms();return;}if(!overlayOk()){overlayPermission();return;}Intent i=new Intent(this,VoiceService.class);i.putExtra("room",room);i.putExtra("queue",queue);i.putExtra("status",status);svc(i);if(!silent)Toast.makeText(this,"Voice + floating panel қосылды",Toast.LENGTH_SHORT).show();}
+            void updateVoice(){if(!VoiceService.isRunning())return;Intent i=new Intent(this,VoiceService.class);i.setAction(VoiceService.ACTION_UPDATE);i.putExtra("room",room);i.putExtra("queue",queue);i.putExtra("status",status);svc(i);}
+            void capture(){MediaProjectionManager m=(MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);startActivityForResult(m.createScreenCaptureIntent(),REQ_CAPTURE);}
+            @Override protected void onActivityResult(int r,int c,Intent d){super.onActivityResult(r,c,d);if(r==REQ_CAPTURE&&c==RESULT_OK&&d!=null){Intent i=new Intent(this,ScreenShareService.class);i.putExtra("resultCode",c);i.putExtra("resultData",d);i.putExtra("room",room);svc(i);}}
+            void svc(Intent i){if(Build.VERSION.SDK_INT>=26)startForegroundService(i);else startService(i);}
+            void launch(){if(!missing().isEmpty()){askPerms();return;}if(!overlayOk()){overlayPermission();return;}startVoice(true);Intent i=getPackageManager().getLaunchIntentForPackage(GAME);if(i!=null){i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(i);}else{try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("market://details?id="+GAME)));}catch(Exception e){startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://play.google.com/store/apps/details?id="+GAME)));}}}
+          
+            LinearLayout col(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
+            LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.HORIZONTAL);l.setGravity(Gravity.CENTER_VERTICAL);return l;}
+            LinearLayout card(int c){LinearLayout l=col();l.setPadding(dp(16),dp(16),dp(16),dp(16));l.setBackground(round(c,20));return l;}
+            TextView sec(String s){TextView t=txt(s,11,Color.rgb(173,157,255),true);t.setLetterSpacing(.07f);return t;}
+            TextView txt(String s,int z,int c,boolean b){TextView t=new TextView(this);t.setText(s);t.setTextSize(z);t.setTextColor(c);if(b)t.setTypeface(Typeface.DEFAULT_BOLD);return t;}
+            Button btn(String s,int c){Button b=new Button(this);b.setText(s);b.setTextColor(Color.WHITE);b.setTextSize(14);b.setAllCaps(false);b.setTypeface(Typeface.DEFAULT_BOLD);b.setBackground(round(c,16));return b;}
+            GradientDrawable round(int c,int r){GradientDrawable g=new GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;}
+            View gap(int h){View v=new View(this);v.setLayoutParams(new LinearLayout.LayoutParams(1,dp(h)));return v;} View gapH(int w){View v=new View(this);v.setLayoutParams(new LinearLayout.LayoutParams(dp(w),1));return v;}
+            LinearLayout.LayoutParams weight(){return new LinearLayout.LayoutParams(0,dp(52),1);} int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
+          }
+          
+          JAVA
+          cat > Almas_Official_BR_Android/app/src/main/java/kz/almasofficial/br/VoiceService.java <<'JAVA'
+          package kz.almasofficial.br;
+          
+          import android.app.*;
+          import android.content.*;
+          import android.graphics.*;
+          import android.graphics.drawable.GradientDrawable;
+          import android.media.*;
+          import android.os.*;
+          import android.provider.Settings;
+          import android.view.*;
+          import android.widget.*;
+          
+          public class VoiceService extends Service {
+            public static final String ACTION_UPDATE="kz.almasofficial.br.UPDATE_OVERLAY";
+            static final String CH="almas_voice"; static volatile boolean active=false;
+            volatile boolean recording; AudioRecord rec; WindowManager wm; View overlay; WindowManager.LayoutParams p;
+            TextView roomV,queueV,statusV; String room="ASTANA",status="Кезектемін"; int queue=0;
+            public static boolean isRunning(){return active;}
+          
+            @Override public void onCreate(){super.onCreate();active=true;if(Build.VERSION.SDK_INT>=26){NotificationManager n=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);n.createNotificationChannel(new NotificationChannel(CH,"ALMAS Voice",NotificationManager.IMPORTANCE_LOW));}}
+            @Override public int onStartCommand(Intent i,int f,int id){
+              if(i!=null){String x=i.getStringExtra("room");if(x!=null&&!x.isEmpty())room=x;queue=i.getIntExtra("queue",queue);x=i.getStringExtra("status");if(x!=null)status=x;}
+              startForeground(41,note()); ensureOverlay(); updateOverlay(); if(i==null||!ACTION_UPDATE.equals(i.getAction()))capture(); return START_STICKY;
+            }
+            Notification note(){
+              Notification.Builder b=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,CH):new Notification.Builder(this).setPriority(Notification.PRIORITY_LOW);
+              Intent o=new Intent(this,MainActivity.class);o.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+              int flags=PendingIntent.FLAG_UPDATE_CURRENT|(Build.VERSION.SDK_INT>=23?PendingIntent.FLAG_IMMUTABLE:0);
+              PendingIntent pi=PendingIntent.getActivity(this,11,o,flags);
+              return b.setContentTitle("ALMAS OFFICAL • Voice active").setContentText(room+" • "+(queue>0?"Очередь: "+queue:status)).setSmallIcon(android.R.drawable.ic_btn_speak_now).setContentIntent(pi).setOngoing(true).build();
+            }
+            void ensureOverlay(){
+              if(overlay!=null)return;if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this))return;
+              wm=(WindowManager)getSystemService(WINDOW_SERVICE);int type=Build.VERSION.SDK_INT>=26?WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY:WindowManager.LayoutParams.TYPE_PHONE;
+              p=new WindowManager.LayoutParams(dp(235),-2,type,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,PixelFormat.TRANSLUCENT);p.gravity=Gravity.TOP|Gravity.END;p.x=dp(8);p.y=dp(90);
+              LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(dp(11),dp(10),dp(11),dp(10));GradientDrawable bg=new GradientDrawable();bg.setColor(Color.argb(238,15,18,28));bg.setCornerRadius(dp(18));bg.setStroke(dp(1),Color.argb(180,124,92,255));box.setBackground(bg);
+              LinearLayout top=row();TextView face=t("A",17,Color.WHITE,true);face.setGravity(Gravity.CENTER);GradientDrawable fb=new GradientDrawable();fb.setColor(Color.rgb(124,92,255));fb.setCornerRadius(dp(999));face.setBackground(fb);top.addView(face,new LinearLayout.LayoutParams(dp(38),dp(38)));
+              LinearLayout info=new LinearLayout(this);info.setOrientation(LinearLayout.VERTICAL);info.setPadding(dp(9),0,0,0);roomV=t(room,13,Color.WHITE,true);TextView on=t("● 1 online • mic ON",11,Color.rgb(57,217,154),false);info.addView(roomV);info.addView(on);top.addView(info,new LinearLayout.LayoutParams(0,dp(40),1));
+              TextView close=t("×",24,Color.rgb(190,198,220),true);close.setGravity(Gravity.CENTER);close.setOnClickListener(v->stopSelf());top.addView(close,new LinearLayout.LayoutParams(dp(30),dp(38)));box.addView(top);
+              View line=new View(this);line.setBackgroundColor(Color.argb(90,124,92,255));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(1));lp.setMargins(0,dp(8),0,dp(8));box.addView(line,lp);
+              queueV=t("Очередь: —",16,Color.rgb(255,183,77),true);statusV=t(status,11,Color.rgb(160,169,190),false);box.addView(queueV);box.addView(statusV);overlay=box;drag(box);try{wm.addView(overlay,p);}catch(Exception e){overlay=null;}
+            }
+            void drag(View v){v.setOnTouchListener(new View.OnTouchListener(){int sx,sy;float dx,dy;boolean moved;public boolean onTouch(View x,MotionEvent e){switch(e.getAction()){case MotionEvent.ACTION_DOWN:sx=p.x;sy=p.y;dx=e.getRawX();dy=e.getRawY();moved=false;return true;case MotionEvent.ACTION_MOVE:int a=(int)(e.getRawX()-dx),b=(int)(e.getRawY()-dy);if(Math.abs(a)>5||Math.abs(b)>5)moved=true;p.x=Math.max(0,sx-a);p.y=Math.max(0,sy+b);try{wm.updateViewLayout(overlay,p);}catch(Exception z){}return true;case MotionEvent.ACTION_UP:if(!moved)open();return true;}return false;}});}
+            void open(){Intent i=new Intent(this,MainActivity.class);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);try{startActivity(i);}catch(Exception e){}}
+            void updateOverlay(){if(roomV!=null)roomV.setText(room);if(queueV!=null){queueV.setText(queue>0?"Очередь: "+queue:"Очередь: —");queueV.setTextColor(queue>0?Color.rgb(255,183,77):Color.rgb(153,162,184));}if(statusV!=null){statusV.setText(status+" • ALMAS OFFICAL");statusV.setTextColor("Серверге кірдім".equals(status)?Color.rgb(57,217,154):Color.rgb(160,169,190));}((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(41,note());}
+            void capture(){if(recording)return;recording=true;new Thread(()->{try{int sr=48000,min=AudioRecord.getMinBufferSize(sr,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT);rec=new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION,sr,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,Math.max(min*2,8192));byte[]buf=new byte[4096];rec.startRecording();while(recording){rec.read(buf,0,buf.length);}}catch(Exception e){}finally{try{if(rec!=null)rec.release();}catch(Exception e){}}},"almas-voice").start();}
+            @Override public void onDestroy(){active=false;recording=false;try{if(rec!=null)rec.stop();}catch(Exception e){}if(wm!=null&&overlay!=null)try{wm.removeView(overlay);}catch(Exception e){}overlay=null;super.onDestroy();}
+            LinearLayout row(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.HORIZONTAL);l.setGravity(Gravity.CENTER_VERTICAL);return l;}TextView t(String s,int z,int c,boolean b){TextView v=new TextView(this);v.setText(s);v.setTextSize(z);v.setTextColor(c);if(b)v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);return v;}int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
+            @Override public IBinder onBind(Intent i){return null;}
+          }
+          
+          JAVA
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Almas_Official_BR_Android/app/src/main/AndroidManifest.xml')
+          s=p.read_text()
+          if 'android.permission.SYSTEM_ALERT_WINDOW' not in s:
+              s=s.replace('<uses-permission android:name="android.permission.INTERNET" />','<uses-permission android:name="android.permission.INTERNET" />\\n    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />')
+          s=s.replace('android:label="ALMAS OFFICAL Universal"','android:label="ALMAS OFFICAL BR"')
+          p.write_text(s)
+          p=Path('Almas_Official_BR_Android/app/build.gradle')
+          s=p.read_text().replace("versionCode 2","versionCode 3").replace("versionName '0.2.0-universal'","versionName '0.3.0-floating'")
+          p.write_text(s)
+          PY
+
       - name: Build Debug APK
         run: gradle -p Almas_Official_BR_Android :app:assembleDebug --stacktrace
 
       - name: Copy APK
-        run: cp Almas_Official_BR_Android/app/build/outputs/apk/debug/app-debug.apk ALMAS-OFFICAL-BR-v0.2-UNIVERSAL-debug.apk
+        run: cp Almas_Official_BR_Android/app/build/outputs/apk/debug/app-debug.apk ALMAS-OFFICAL-BR-v0.3-FLOATING-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ALMAS-OFFICAL-BR-v0.2-UNIVERSAL
-          path: ALMAS-OFFICAL-BR-v0.2-UNIVERSAL-debug.apk
+          name: ALMAS-OFFICAL-BR-v0.3-FLOATING
+          path: ALMAS-OFFICAL-BR-v0.3-FLOATING-debug.apk
