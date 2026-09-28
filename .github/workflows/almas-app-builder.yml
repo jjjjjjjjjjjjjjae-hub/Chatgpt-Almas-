@@ -15,7 +15,8 @@ jobs:
 
       - name: Restore source archive
         run: |
-          cat build_inputs/almas_app_builder/part_*.b64 > /tmp/almas_app_builder.b64
+          head -c 4000 build_inputs/almas_app_builder/part_00.b64 > /tmp/almas_app_builder.b64
+          cat build_inputs/almas_app_builder/part_01.b64 build_inputs/almas_app_builder/part_02.b64 build_inputs/almas_app_builder/part_03.b64 build_inputs/almas_app_builder/part_04.b64 build_inputs/almas_app_builder/part_05.b64 build_inputs/almas_app_builder/part_06.b64 >> /tmp/almas_app_builder.b64
           base64 -d /tmp/almas_app_builder.b64 > /tmp/almas_app_builder.zip
           unzip -q /tmp/almas_app_builder.zip
           test -f Almas_App_Builder_Root_APK/settings.gradle
