@@ -1,0 +1,48 @@
+name: Build Almas App Builder APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - almas-app-builder-build
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore source archive
+        run: |
+          cat build_inputs/almas_app_builder/part_*.b64 > /tmp/almas_app_builder.b64
+          base64 -d /tmp/almas_app_builder.b64 > /tmp/almas_app_builder.zip
+          unzip -q /tmp/almas_app_builder.zip
+          test -f Almas_App_Builder_Root_APK/settings.gradle
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 35 SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Setup Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build Debug APK
+        working-directory: Almas_App_Builder_Root_APK
+        run: gradle :builder:assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Almas-App-Builder-APK
+          path: Almas_App_Builder_Root_APK/builder/build/outputs/apk/debug/builder-debug.apk
