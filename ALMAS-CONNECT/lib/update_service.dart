@@ -137,10 +137,14 @@ class AlmasUpdater {
           await part.delete();
           offset = 0;
         }
-        if (offset == release.size && await verify(part)) {
-          await part.rename(ready.path);
-          onProgress(release.size, release.size);
-          return ready;
+        if (offset == release.size) {
+          if (await verify(part)) {
+            await part.rename(ready.path);
+            onProgress(release.size, release.size);
+            return ready;
+          }
+          await part.delete(); // Bad completed partial: retry from byte zero.
+          offset = 0;
         }
         final request = await client.getUrl(release.url);
         request.headers.set(HttpHeaders.userAgentHeader, 'ALMAS-CONNECT/$almasVersion');
