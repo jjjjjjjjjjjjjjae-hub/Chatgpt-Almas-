@@ -8,6 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'update_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +60,17 @@ class _HomePageState extends State<HomePage> {
   bool _busy = false;
   double _progress = 0;
 
+  final _updater = AlmasUpdater();
+  Timer? _updateTimer;
+  AlmasRelease? _latestUpdate;
+  File? _downloadedUpdate;
+  bool _checkingUpdates = false;
+  bool _downloadingUpdate = false;
+  bool _autoWifiUpdates = false;
+  double _updateProgress = 0;
+  String _updateState = 'Жаңартулар тексерілмеген';
+
+
   String get _deviceName => Platform.isWindows ? 'Windows ноутбук' : 'Android телефон';
   bool get _connected => _remoteIp != null && _remoteToken != null;
 
@@ -67,7 +81,128 @@ class _HomePageState extends State<HomePage> {
     _myToken = _makeToken();
     _approvedTokens.add(_myToken);
     unawaited(_startServer());
+    unawaited(_initializeUpdates());
+    _updateTimer = Timer.periodic(const Duration(hours: 12), (_) {
+      unawaited(_checkUpdates(silent: true));
+    });
   }
+
+  Future<void> _initializeUpdates() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) setState(() {
+        _autoWifiUpdates = prefs.getBool('auto_wifi_updates') ?? false;
+      });
+    } catch (_) { /* App still allows manual checks. */ }
+    await _checkUpdates(silent: true);
+  }
+
+  Future<void> _setAutoWifiUpdates(bool enabled) async {
+    setState(() => _autoWifiUpdates = enabled);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('auto_wifi_updates', enabled);
+    } catch (e) {
+      _log('Баптауды сақтау мүмкін болмады: $e');
+    }
+    if (enabled && _latestUpdate != null && !_downloadingUpdate) {
+      if (await _updater.canAutoDownload()) unawaited(_downloadUpdate());
+    }
+  }
+
+  Future<void> _checkUpdates({bool silent = false}) async {
+    if (_checkingUpdates || _downloadingUpdate || !mounted) return;
+    setState(() => _checkingUpdates = true);
+    try {
+      final newer = await _updater.check();
+      if (!mounted) return;
+      setState(() {
+        _latestUpdate = newer;
+        _downloadedUpdate = null;
+        _updateState = newer == null
+            ? 'Жаңа жарияланған нұсқа жоқ (v$almasVersion)'
+            : 'Жаңа нұсқа: v${newer.version} (${(newer.size / (1024 * 1024)).toStringAsFixed(1)} МБ)';
+      });
+      if (newer != null && _autoWifiUpdates &&
+          await _updater.canAutoDownload()) {
+        unawaited(_downloadUpdate());
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _updateState = 'Тексеру мүмкін болмады (интернет жоқ болуы мүмкін)');
+      if (!silent) _log('Жаңартуды тексеру қатесі: $e');
+    } finally {
+      if (mounted) setState(() => _checkingUpdates = false);
+    }
+  }
+
+  Future<void> _downloadUpdate() async {
+    final release = _latestUpdate;
+    if (release == null || _downloadingUpdate || !mounted) return;
+    setState(() {
+      _downloadingUpdate = true;
+      _updateProgress = 0;
+      _updateState = 'Жаңарту жүктелуде...';
+    });
+    var lastRefresh = DateTime.now();
+    try {
+      final file = await _updater.download(
+        release,
+        onProgress: (loaded, total) {
+          if (!mounted) return;
+          final now = DateTime.now();
+          if (now.difference(lastRefresh).inMilliseconds < 300 && loaded != total) return;
+          lastRefresh = now;
+          setState(() => _updateProgress = total == 0 ? 0 : loaded / total);
+        },
+      );
+      if (!mounted) return;
+      setState(() {
+        _downloadedUpdate = file;
+        _updateState = 'v${release.version} жүктелді және SHA-256 тексерілді';
+      });
+      await _offerInstall();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _updateState = 'Жүктеу тоқтады. Кейін сол жерден жалғастыруға болады.';
+      });
+      _log('Жаңарту: $e');
+    } finally {
+      if (mounted) setState(() => _downloadingUpdate = false);
+    }
+  }
+
+  Future<void> _offerInstall() async {
+    final file = _downloadedUpdate;
+    if (file == null || !mounted) return;
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Жаңартуды орнату керек пе?'),
+        content: Text(Platform.isAndroid
+            ? 'Android орнатуға рұқсат сұрайды. Қолданба деректерін сақтап қалу үшін APK бұрынғы нұсқамен бірдей кілтпен қол қойылуы керек.'
+            : 'Windows қолданбасы жабылып, жаңартылған EXE файлдарына ауыстырылады. Бағдарламаның ZIP қалтасына жазуға рұқсат қажет.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Кейін')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Орнату')),
+        ],
+      ),
+    );
+    if (approved != true) return;
+    try {
+      if (Platform.isAndroid) {
+        await _updater.installAndroid(file);
+      } else if (Platform.isWindows) {
+        await _updater.installWindows(file);
+      }
+    } catch (e) {
+      _log('Орнату іске қосылмады: $e');
+    }
+  }
+
 
   String _makeToken() => List<int>.generate(32, (_) => _random.nextInt(256))
       .map((n) => n.toRadixString(16).padLeft(2, '0'))
@@ -382,6 +517,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _server?.close(force: true);
+    _updateTimer?.cancel();
+    _updater.cancel();
     _ipController.dispose();
     _codeController.dispose();
     _textController.dispose();
@@ -390,13 +527,57 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('ALMAS CONNECT  ·  v0.1')),
+        appBar: AppBar(title: const Text('ALMAS CONNECT  ·  v$almasVersion')),
         body: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 680),
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                Card(child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    const Text('Автожаңарту', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    Text(_updateState),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      title: const Text('Wi-Fi кезінде автоматты жүктеу'),
+                      subtitle: const Text('Әдепкіде өшірулі. Хотспот та Wi-Fi деп танылуы мүмкін! Мобильді трафикті тек өзің бақыла.'),
+                      value: _autoWifiUpdates,
+                      onChanged: _setAutoWifiUpdates,
+                    ),
+                    if (_downloadingUpdate) ...[
+                      LinearProgressIndicator(value: _updateProgress > 0 ? _updateProgress : null),
+                      const SizedBox(height: 6),
+                      Text('${(_updateProgress * 100).toStringAsFixed(1)}%'),
+                      TextButton.icon(
+                        onPressed: _updater.cancel,
+                        icon: const Icon(Icons.pause),
+                        label: const Text('Тоқтату (кейін жалғастыру)'),
+                      ),
+                    ],
+                    Wrap(spacing: 8, children: [
+                      OutlinedButton.icon(
+                        onPressed: _checkingUpdates || _downloadingUpdate
+                            ? null : () => unawaited(_checkUpdates()),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Тексеру'),
+                      ),
+                      if (_latestUpdate != null && !_downloadingUpdate)
+                        FilledButton.icon(
+                          onPressed: _downloadedUpdate == null
+                              ? _downloadUpdate : _offerInstall,
+                          icon: Icon(_downloadedUpdate == null
+                              ? Icons.download : Icons.system_update),
+                          label: Text(_downloadedUpdate == null
+                              ? 'Жүктеу / жалғастыру' : 'Орнату'),
+                        ),
+                    ]),
+                    const Text('Тексеру үшін интернет қажет. Жүктелген бөлімдер сақталады; жаңа файл толық тексерілмей орнатылмайды.', style: TextStyle(fontSize: 12)),
+                  ]),
+                )),
+                const SizedBox(height: 12),
                 Card(child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -447,7 +628,7 @@ class _HomePageState extends State<HomePage> {
                   ]),
                 )),
                 const SizedBox(height: 12),
-                const Text('v0.1 — тек ортақ LAN / Wi-Fi хотспот. Ашық Wi-Fi желісінде қолданбаңыз: желілік деректер әлі шифрланбаған. Онлайн сервер, экран және Smart Mouse келесі кезеңде.', style: TextStyle(fontSize: 12)),
+                const Text('v0.2 — тек ортақ LAN / Wi-Fi хотспот. Ашық Wi-Fi желісінде қолданбаңыз: желілік деректер әлі шифрланбаған. Онлайн сервер, экран және Smart Mouse келесі кезеңде.', style: TextStyle(fontSize: 12)),
               ],
             ),
           ),
