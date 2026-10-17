@@ -356,11 +356,10 @@ class _HomePageState extends State<HomePage> {
             : await picker.pickVideo(source: ImageSource.camera);
         if (picked != null) file = File(picked.path);
       } else {
-        final result = await FilePicker.pickFiles(
+        final pickedFile = await FilePicker.pickFile(
           type: kind == 'photo' ? FileType.image : FileType.video,
-          withData: false,
         );
-        final path = result?.files.single.path;
+        final path = pickedFile?.path;
         if (path != null) file = File(path);
       }
       if (file != null) await _sendFile(file, mode: destination == 'Буфер' ? 'clipboard' : 'downloads', kind: kind);
@@ -372,8 +371,8 @@ class _HomePageState extends State<HomePage> {
   Future<void> _chooseFile() async {
     if (!_connected || _busy) return;
     try {
-      final result = await FilePicker.pickFiles(type: FileType.any, withData: false);
-      final filePath = result?.files.single.path;
+      final pickedFile = await FilePicker.pickFile(type: FileType.any);
+      final filePath = pickedFile?.path;
       if (filePath != null) await _sendFile(File(filePath), mode: 'downloads', kind: 'file');
     } catch (e) {
       _log('Файл таңдау қатесі: $e');
