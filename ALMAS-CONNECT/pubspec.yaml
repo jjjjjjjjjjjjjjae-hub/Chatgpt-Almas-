@@ -1,7 +1,7 @@
 name: almas_connect
 description: ALMAS CONNECT - Android and Windows local device bridge
 publish_to: none
-version: 0.2.0+2
+version: 0.3.0+3
 
 environment:
   sdk: '>=3.10.0 <4.0.0'
@@ -16,6 +16,8 @@ dependencies:
   crypto: ^3.0.6
   open_filex: ^4.7.0
   shared_preferences: ^2.5.5
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.2
 
 flutter:
   uses-material-design: true
