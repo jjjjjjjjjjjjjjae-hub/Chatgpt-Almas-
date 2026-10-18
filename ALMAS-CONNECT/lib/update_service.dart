@@ -7,7 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
-const String almasVersion = '0.2.0';
+const String almasVersion = '0.3.0';
 
 class AlmasRelease {
   const AlmasRelease({
