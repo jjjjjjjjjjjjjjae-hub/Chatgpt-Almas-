@@ -1,8 +1,18 @@
-# ALMAS CONNECT · v0.2 (Android APK + Windows EXE)
+# ALMAS CONNECT · v0.3 (Android APK + Windows EXE)
 
 A Kazakh-language Flutter MVP for transferring files, gallery/camera photos and videos, and text between an Android phone and a Windows laptop **without internet**, while both are connected to the same local Wi-Fi or phone hotspot.
 
-## What works in v0.2
+## v0.3 QR pairing (offline)
+
+- On Windows, click **QR көрсету** to show a QR for the current LAN IP and the six-digit pairing code. Android can show its QR too.
+- On the phone, click **QR сканерлеу**, allow camera access, scan the laptop QR, inspect the destination IP, then press **Қосылу**. No manual IP or code typing required.
+- Scanning works **without internet** because Android uses bundled ML Kit in `mobile_scanner`. This adds several MB to Android build size.
+- QR data includes only the local IP, app port and temporary visible code; it does not contain the session authentication token.
+- Both devices must be on the same Wi-Fi network, or the laptop can connect to the phone hotspot with mobile data disabled. Windows Firewall must allow the private network.
+- If Windows has multiple adapters, choose the actual Wi-Fi IP in the drop-down before displaying the QR. QR does not solve Wi-Fi client isolation, blocked ports or VLAN separation.
+- QR pairs using the current LAN HTTP code flow, which is **not encrypted**. Do not use on public/untrusted networks.
+
+## What works in v0.3
 
 - Android and Windows device screens from the same Flutter codebase.
 - Manual IP + six-digit pairing code; server uses randomly generated tokens and rate-limits bad pairing attempts.
