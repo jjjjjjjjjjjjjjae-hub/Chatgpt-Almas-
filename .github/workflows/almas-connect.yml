@@ -1,0 +1,146 @@
+name: ALMAS CONNECT APK + EXE
+on:
+  push:
+    branches: [almas-connect-v0]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ALMAS-CONNECT
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Android platform files
+        run: |
+          flutter create --platforms=android --project-name almas_connect "$RUNNER_TEMP/almas_scaffold"
+          cp -R "$RUNNER_TEMP/almas_scaffold/android" ./android
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('android/app/src/main/AndroidManifest.xml')
+          s = p.read_text()
+          insert = "\n".join([
+              '<uses-permission android:name="android.permission.INTERNET" />',
+              '<uses-permission android:name="android.permission.CAMERA" />',
+              '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />',
+              '<application android:usesCleartextTraffic="true"',
+          ])
+          s = s.replace('<application', insert, 1)
+          p.write_text(s)
+          PY
+      - name: Dependencies and analysis
+        run: |
+          flutter pub get
+          flutter analyze lib
+      - name: Configure stable signing for release tags
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          SIGNING_KEYSTORE_B64: ${{ secrets.ALMAS_SIGNING_KEYSTORE_B64 }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.ALMAS_SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.ALMAS_SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.ALMAS_SIGNING_KEY_PASSWORD }}
+        run: |
+          if [[ -z "$SIGNING_KEYSTORE_B64" || -z "$SIGNING_STORE_PASSWORD" || -z "$SIGNING_KEY_ALIAS" || -z "$SIGNING_KEY_PASSWORD" ]]; then
+            echo "::error::Set all four ALMAS_SIGNING_* secrets before a release; do not publish an APK with transient debug signing."
+            exit 1
+          fi
+          printf '%s' "$SIGNING_KEYSTORE_B64" | base64 -d > android/almas-release.jks
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android/app/build.gradle.kts')
+          s=p.read_text()
+          if 'signingConfig = signingConfigs.getByName("debug")' not in s:
+              raise SystemExit('Flutter Android signing block changed: update the signing patch')
+          block='''
+              signingConfigs {
+                  create("almasRelease") {
+                      storeFile = file("../almas-release.jks")
+                      storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+                      keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                      keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+                  }
+              }
+          '''
+          s=s.replace('    buildTypes {',block+'\n    buildTypes {',1)
+          s=s.replace('signingConfig = signingConfigs.getByName("debug")',
+                      'signingConfig = signingConfigs.getByName("almasRelease")',1)
+          p.write_text(s)
+          PY
+      - name: Build Android APK
+        run: flutter build apk --release
+      - name: Name Android release asset
+        run: cp build/app/outputs/flutter-apk/app-release.apk ALMAS-CONNECT-Android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ALMAS-CONNECT-Android-APK
+          path: ALMAS-CONNECT/ALMAS-CONNECT-Android.apk
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ALMAS-CONNECT
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Windows platform files
+        shell: pwsh
+        run: |
+          flutter config --enable-windows-desktop
+          flutter create --platforms=windows --project-name almas_connect "$env:RUNNER_TEMP\almas_scaffold"
+          Copy-Item "$env:RUNNER_TEMP\almas_scaffold\windows" .\windows -Recurse
+      - name: Dependencies and analysis
+        shell: pwsh
+        run: |
+          flutter pub get
+          flutter analyze lib
+      - name: Build Windows EXE
+        run: flutter build windows --release
+      - name: Pack Windows app (EXE + DLL + data)
+        shell: pwsh
+        run: Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "ALMAS-CONNECT-Windows.zip" -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ALMAS-CONNECT-Windows-EXE-ZIP
+          path: ALMAS-CONNECT/ALMAS-CONNECT-Windows.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish signed update
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ALMAS-CONNECT-Android-APK
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: ALMAS-CONNECT-Windows-EXE-ZIP
+          path: release
+      - name: Make SHA256 checksum files
+        working-directory: release
+        run: |
+          sha256sum ALMAS-CONNECT-Android.apk > ALMAS-CONNECT-Android.apk.sha256
+          sha256sum ALMAS-CONNECT-Windows.zip > ALMAS-CONNECT-Windows.zip.sha256
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release/ALMAS-CONNECT-Android.apk
+            release/ALMAS-CONNECT-Windows.zip
+            release/ALMAS-CONNECT-Android.apk.sha256
+            release/ALMAS-CONNECT-Windows.zip.sha256
